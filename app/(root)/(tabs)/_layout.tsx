@@ -1,82 +1,76 @@
 import { Tabs } from "expo-router";
-import { Image, ImageSourcePropType, Text, View } from "react-native";
-
+import { Image } from "react-native";
 import icons from "@/constants/icons";
 
-const TabIcon = ({
-  focused,
-  icon,
-  title,
-}: {
-  focused: boolean;
-  icon: ImageSourcePropType;
-  title: string;
-}) => (
-  <View className="flex-1 mt-3 flex flex-col items-center">
-    <Image
-      source={icon}
-      tintColor={focused ? "#0061FF" : "#666876"}
-      resizeMode="contain"
-      className="size-6"
-    />
-    <Text
-      className={`${
-        focused
-          ? "text-primary-300 font-rubik-medium"
-          : "text-black-200 font-rubik"
-      } text-xs w-full text-center mt-1`}
-    >
-      {title}
-    </Text>
-  </View>
-);
-
-const TabsLayout = () => {
+export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: "white",
-          position: "absolute",
-          borderTopColor: "#0061FF1A",
           borderTopWidth: 1,
-          minHeight: 70,
+          borderTopColor: "#F4F4F5",
+          height: 65,
+          paddingBottom: 10,
         },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          headerShown: false,
+          title: "Ana Sayfa",
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.home} title="Home" />
+            <Image
+              source={icons.home}
+              className="w-6 h-6"
+              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+            />
           ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="appointments"
         options={{
-          title: "Explore",
-          headerShown: false,
+          title: "Randevular",
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.search} title="Explore" />
+            <Image
+              source={icons.calendar}
+              className="w-6 h-6"
+              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+            />
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="portfolio"
+        options={{
+          title: "Portfolyo",
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={icons.gallery}
+              className="w-6 h-6"
+              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+            />
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
-          headerShown: false,
+          title: "Profil",
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.person} title="Profile" />
+            <Image
+              source={icons.person}
+              className="w-6 h-6"
+              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+            />
           ),
         }}
       />
     </Tabs>
   );
-};
-
-export default TabsLayout;
+}

@@ -1,59 +1,89 @@
-import React, { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { account, getCurrentUser } from "./appwrite";
+import { Models } from "react-native-appwrite";
+import { client } from "./appwrite";
 
-import { getCurrentUser } from "./appwrite";
-import { useAppwrite } from "./useAppwrite";
+interface User extends Models.User<Models.Preferences> {
+  role: "admin" | "client";
+  avatar?: string;
+}
 
 interface GlobalContextType {
-  isLogged: boolean;
   user: User | null;
   loading: boolean;
-  refetch: () => void;
+  isLogged: boolean;
+  refetch: () => Promise<void>;
+  logout: () => Promise<void>;
+  setLoading: (loading: boolean) => void;
 }
 
-interface User {
-  $id: string;
-  name: string;
-  email: string;
-  avatar: string;
-}
+const GlobalContext = createContext<GlobalContextType>({
+  user: null,
+  loading: true,
+  isLogged: false,
+  refetch: async () => {},
+  logout: async () => {},
+  setLoading: () => {},
+});
 
-const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
+export function GlobalProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-interface GlobalProviderProps {
-  children: ReactNode;
-}
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      const userData = await getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export const GlobalProvider = ({ children }: GlobalProviderProps) => {
-  const {
-    data: user,
-    loading,
-    refetch,
-  } = useAppwrite({
-    fn: getCurrentUser,
-  });
+  const logout = async () => {
+    try {
+      await account.deleteSession("current");
+      setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const isLogged = !!user;
+  // Session değişikliklerini dinle
+  useEffect(() => {
+    const unsubscribe = client.subscribe(`account`, (response) => {
+      if (response.events.includes("account.sessions.delete")) {
+        setUser(null);
+      } else if (response.events.includes("account.sessions.create")) {
+        fetchUser();
+      }
+    });
+
+    fetchUser();
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <GlobalContext.Provider
       value={{
-        isLogged,
         user,
         loading,
-        refetch: () => refetch({}),
+        isLogged: !!user,
+        refetch: fetchUser,
+        logout,
+        setLoading,
       }}
     >
       {children}
     </GlobalContext.Provider>
   );
-};
+}
 
-export const useGlobalContext = (): GlobalContextType => {
-  const context = useContext(GlobalContext);
-  if (!context)
-    throw new Error("useGlobalContext must be used within a GlobalProvider");
-
-  return context;
-};
-
-export default GlobalProvider;
+export const useGlobalContext = () => useContext(GlobalContext);
