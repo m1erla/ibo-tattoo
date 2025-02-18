@@ -62,13 +62,24 @@ const Auth = () => {
             entering={SlideInDown.delay(200).springify()}
             className="items-center mt-10"
           >
-            <View className="w-32 h-32 rounded-full bg-white/10 items-center justify-center overflow-hidden">
-              <BlurView intensity={20} className="absolute w-full h-full" />
-              <Image
-                source={require("@/assets/images/logo.png")}
-                className="w-32 h-32"
-                resizeMode="contain"
+            <View className="w-32 h-32 rounded-full items-center justify-center">
+              {/* Outer Shadow */}
+              <View
+                className="absolute w-full h-full rounded-full bg-white/20 shadow-lg shadow-black/50"
+                style={{ transform: [{ scale: 1.05 }] }}
               />
+
+              {/* Inner Container */}
+              <View className="w-[88%] h-[88%] rounded-full bg-white/10 items-center justify-center overflow-hidden">
+                <BlurView intensity={20} className="absolute w-full h-full" />
+
+                {/* Logo */}
+                <Image
+                  source={require("@/assets/images/logo.png")}
+                  className="w-28 h-28"
+                  resizeMode="contain"
+                />
+              </View>
             </View>
           </Animated.View>
 

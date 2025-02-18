@@ -159,18 +159,18 @@ export default function Index() {
               onPress={() => router.push("/(root)/(tabs)/profile")}
               className="overflow-hidden rounded-full"
             >
-              {user?.avatar ? (
-                <Image
-                  source={{ uri: user.avatar }}
-                  className="w-12 h-12 rounded-full bg-gray-100"
-                  defaultSource={images.avatar} // Yükleme sırasında gösterilecek
-                />
-              ) : (
-                <Image
-                  source={images.avatar}
-                  className="w-12 h-12 rounded-full"
-                />
-              )}
+              <Image
+                source={
+                  user?.avatar && user.avatar !== "null"
+                    ? { uri: user.avatar }
+                    : images.avatar
+                }
+                className="w-12 h-12 rounded-full bg-gray-100"
+                defaultSource={images.avatar}
+                onError={() => {
+                  console.log("Avatar yükleme hatası");
+                }}
+              />
             </Pressable>
           </Animated.View>
         </View>

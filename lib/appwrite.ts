@@ -106,8 +106,12 @@ export async function getCurrentUser() {
   try {
     const result = await account.get();
     if (result.$id) {
-      // Google avatarını kullan
-      const avatarUrl = `https://lh3.googleusercontent.com/a/${result.prefs.avatarId}`;
+      let avatarUrl = null;
+      
+      // Google avatarı için prefs kontrolü
+      if (result.prefs?.avatarId) {
+        avatarUrl = `https://lh3.googleusercontent.com/a/${result.prefs.avatarId}`;
+      }
       
       // Kullanıcı rolünü veritabanından al
       const userData = await databases.getDocument(
@@ -118,13 +122,13 @@ export async function getCurrentUser() {
 
       return {
         ...result,
-        avatar: avatarUrl, // Google avatar URL'ini kullan
+        avatar: avatarUrl, // Eğer avatarUrl null ise, UI tarafında varsayılan avatar kullanılacak
         role: userData.role || "client"
       };
     }
     return null;
   } catch (error) {
-    console.log(error);
+    console.log("getCurrentUser error:", error);
     return null;
   }
 }
