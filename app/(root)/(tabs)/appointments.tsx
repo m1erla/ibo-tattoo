@@ -69,6 +69,7 @@ interface Appointment {
     size: string;
     style: string;
   };
+  clientId: string;
 }
 
 export default function Appointments() {
@@ -86,15 +87,19 @@ export default function Appointments() {
 
     try {
       const response = await appointmentService.list([
-        Query.equal("clientId", user.$id),
+        ...(user.role === "admin"
+          ? [] // Admin için filtre yok
+          : [Query.equal("clientId", user.$id)]), // Client için sadece kendi randevuları
         Query.orderDesc("dateTime"),
       ]);
+
       setAppointments(
         response.documents.map((doc: any) => ({
           $id: doc.$id,
           dateTime: doc.dateTime,
           status: doc.status,
           designDetails: JSON.parse(doc.designDetails),
+          clientId: doc.clientId, // Admin için müşteri bilgisini de ekleyelim
         }))
       );
     } catch (error) {
@@ -204,6 +209,12 @@ export default function Appointments() {
                   <Text className="text-black-100 text-sm font-rubik mt-1">
                     {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
                   </Text>
+                  {/* Admin için müşteri bilgisi */}
+                  {user?.role === "admin" && (
+                    <Text className="text-primary-300 text-sm font-rubik mt-1">
+                      Müşteri ID: {appointment.clientId}
+                    </Text>
+                  )}
                 </View>
                 <View
                   className={`px-3 py-1 rounded-full ${getStatusColor(
@@ -215,8 +226,31 @@ export default function Appointments() {
                   </Text>
                 </View>
               </View>
-              {/* Admin için onay/red butonları */}
-              {renderAppointmentActions(appointment)}
+              {/* Onay/Red butonları */}
+              {user?.role === "admin" && appointment.status === "pending" && (
+                <View className="flex-row gap-2 mt-3">
+                  <Pressable
+                    onPress={() =>
+                      handleStatusChange(appointment.$id, "confirmed")
+                    }
+                    className="flex-1 bg-primary-300 py-2 rounded-xl"
+                  >
+                    <Text className="text-white font-rubik-medium text-center text-sm">
+                      Onayla
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      handleStatusChange(appointment.$id, "cancelled")
+                    }
+                    className="flex-1 bg-red-500 py-2 rounded-xl"
+                  >
+                    <Text className="text-white font-rubik-medium text-center text-sm">
+                      Reddet
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </Animated.View>
           ))}
         </View>

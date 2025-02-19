@@ -1,4 +1,12 @@
-import { View, Text, ScrollView, Pressable, Switch, Image } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Switch,
+  Image,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useGlobalContext } from "@/lib/global-provider";
@@ -6,7 +14,7 @@ import { useRouter } from "expo-router";
 import icons from "@/constants/icons";
 
 export default function Profile() {
-  const { user, logout } = useGlobalContext();
+  const { user, logout, refetch } = useGlobalContext();
   const router = useRouter();
 
   const handleLogout = async () => {
