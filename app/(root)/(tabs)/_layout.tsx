@@ -71,6 +71,21 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Gizli ekranlar - Tab bar'da gösterilmeyecek */}
+      <Tabs.Screen
+        name="appointment-details"
+        options={{
+          href: null, // Bu ekranı URL'de gizle
+        }}
+      />
+
+      <Tabs.Screen
+        name="create-appointment"
+        options={{
+          href: null, // Bu ekranı URL'de gizle
+        }}
+      />
     </Tabs>
   );
 }

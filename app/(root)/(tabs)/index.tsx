@@ -17,9 +17,10 @@ import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 
 import { useGlobalContext } from "@/lib/global-provider";
-import { databases, config } from "@/lib/appwrite";
+import { databases, appwriteConfig } from "@/lib/appwrite";
 import { Query } from "react-native-appwrite";
 import images from "@/constants/images";
+import { useTheme } from "@/lib/theme-provider";
 
 const { width } = Dimensions.get("window");
 
@@ -55,6 +56,7 @@ export default function Index() {
   const { user, logout } = useGlobalContext();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentWorks, setRecentWorks] = useState<PortfolioItem[]>([]);
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,8 +65,8 @@ export default function Index() {
       try {
         // Randevuları getir
         const appointmentsData = await databases.listDocuments(
-          process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
-          config.appointmentsCollectionId!,
+          appwriteConfig.databaseId!,
+          appwriteConfig.appointmentsCollectionId!,
           [
             ...(user.role === "admin"
               ? [Query.orderDesc("dateTime")]
@@ -87,8 +89,8 @@ export default function Index() {
 
         // Son portföy çalışmalarını getir
         const portfolioData = await databases.listDocuments(
-          process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
-          config.portfolioCollectionId!,
+          appwriteConfig.databaseId!,
+          appwriteConfig.portfolioCollectionId!,
           [Query.orderDesc("createdAt"), Query.limit(3)]
         );
         setRecentWorks(
@@ -113,16 +115,38 @@ export default function Index() {
     fetchData();
   }, [user]);
 
+  // Tema bazlı renkler güncellendi
+  const theme = {
+    background: isDarkMode ? "bg-[#121212]" : "bg-[#FAFAFA]",
+    card: {
+      background: isDarkMode ? "bg-[#1E1E1E]" : "bg-white",
+      border: isDarkMode ? "border-[#2A2A2A]" : "border-gray-100",
+      highlight: isDarkMode ? "bg-[#2A2A2A]" : "bg-neutral-50",
+    },
+    text: {
+      primary: isDarkMode ? "text-[#E0E0E0]" : "text-black-300",
+      secondary: isDarkMode ? "text-[#A0A0A0]" : "text-black-100",
+      accent: isDarkMode ? "text-neutral-200" : "text-neutral-700",
+    },
+  };
+
   const getStatusColor = (
     status: "pending" | "confirmed" | "completed" | "cancelled"
   ) => {
-    const colors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-blue-100 text-blue-800",
-      completed: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800",
-    } as const;
-    return colors[status] || "bg-gray-100 text-gray-800";
+    const colors = isDarkMode
+      ? {
+          pending: "bg-amber-500/20 text-amber-400",
+          confirmed: "bg-neutral-500/20 text-neutral-300",
+          completed: "bg-emerald-500/20 text-emerald-400",
+          cancelled: "bg-rose-500/20 text-rose-400",
+        }
+      : ({
+          pending: "bg-amber-100 text-amber-800",
+          confirmed: "bg-neutral-100 text-neutral-800",
+          completed: "bg-emerald-100 text-emerald-800",
+          cancelled: "bg-rose-100 text-rose-800",
+        } as const);
+    return colors[status];
   };
 
   const handleAppointmentsPress = () => {
@@ -139,125 +163,167 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-accent-100">
+    <SafeAreaView className={`flex-1 ${theme.background}`}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
-        <View className="px-4 pt-4">
-          <Animated.View
-            entering={FadeInDown.delay(100).springify()}
-            className="flex-row items-center justify-between"
-          >
+        {/* Header - Yeniden Tasarlandı */}
+        <Animated.View
+          entering={FadeInDown.delay(100).springify()}
+          className="px-6 pt-6"
+        >
+          <View className="flex-row items-center justify-between">
             <View>
-              <Text className="text-black-100 text-base font-rubik">
-                Hoş geldin,
+              <Text className={`${theme.text.secondary} text-base font-rubik`}>
+                {new Date().toLocaleDateString("tr-TR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
               </Text>
-              <Text className="text-black-300 text-xl font-rubik-semibold mt-1">
+              <Text
+                className={`${theme.text.primary} text-2xl font-rubik-bold mt-1`}
+              >
                 {user?.name}
               </Text>
             </View>
             <Pressable
               onPress={() => router.push("/(root)/(tabs)/profile")}
-              className="overflow-hidden rounded-full"
+              className={`${theme.card.background} p-2 rounded-full shadow-sm`}
             >
               <Image
-                source={
-                  user?.avatar && user.avatar !== "null"
-                    ? { uri: user.avatar }
-                    : images.avatar
-                }
-                className="w-12 h-12 rounded-full bg-gray-100"
-                defaultSource={images.avatar}
-                onError={() => {
-                  console.log("Avatar yükleme hatası");
-                }}
+                source={user?.avatar ? { uri: user.avatar } : images.avatar}
+                className="w-10 h-10 rounded-full"
               />
             </Pressable>
+          </View>
+        </Animated.View>
+
+        {/* İstatistik Kartları - Yeni */}
+        <View className="flex-row px-6 mt-8 space-x-4">
+          <Animated.View
+            entering={FadeInRight.delay(200).springify()}
+            className="flex-1"
+          >
+            <Pressable
+              onPress={handleAppointmentsPress}
+              className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
+            >
+              <Text className={`${theme.text.accent} text-2xl font-rubik-bold`}>
+                {appointments.length}
+              </Text>
+              <Text
+                className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+              >
+                Aktif Randevu
+              </Text>
+            </Pressable>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInRight.delay(300).springify()}
+            className="flex-1"
+          >
+            <View
+              className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
+            >
+              <Text className={`${theme.text.accent} text-2xl font-rubik-bold`}>
+                {recentWorks.length}
+              </Text>
+              <Text
+                className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+              >
+                Yeni Çalışma
+              </Text>
+            </View>
           </Animated.View>
         </View>
 
-        {/* Stats Card */}
-        <Animated.View
-          entering={FadeInRight.delay(200).springify()}
-          className="mx-4 mt-6"
-        >
-          <BlurView intensity={30} className="rounded-3xl overflow-hidden">
-            <Pressable
-              onPress={handleAppointmentsPress}
-              className="p-4 bg-primary-300/10"
-            >
-              <Image
-                source={images.cardGradient}
-                className="absolute w-full h-full"
-                resizeMode="cover"
-              />
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-black-300 text-lg font-rubik-medium">
-                    {user?.role === "admin"
-                      ? "Günlük Randevular"
-                      : "Randevularım"}
-                  </Text>
-                  <Text className="text-black-100 text-sm font-rubik mt-1">
-                    {appointments.length} aktif randevu
-                  </Text>
-                </View>
-              </View>
+        {/* Randevular - Yeniden Tasarlandı */}
+        <View className="mt-8 px-6">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className={`${theme.text.primary} text-xl font-rubik-bold`}>
+              Son Randevular
+            </Text>
+            <Pressable onPress={handleAppointmentsPress}>
+              <Text className={`${theme.text.accent} font-rubik-medium`}>
+                Tümünü Gör
+              </Text>
             </Pressable>
-          </BlurView>
-        </Animated.View>
-
-        {/* Recent Appointments */}
-        <View className="mt-8 px-4">
-          <Animated.Text
-            entering={SlideInRight.delay(300).springify()}
-            className="text-black-300 text-lg font-rubik-medium mb-4"
-          >
-            Son Randevular
-          </Animated.Text>
+          </View>
 
           {appointments.map((appointment, index) => (
             <Animated.View
               key={appointment._id}
               entering={FadeInDown.delay(400 + index * 100).springify()}
-              className="bg-white p-4 rounded-2xl mb-3 shadow-sm"
+              className="mb-4"
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                    <View
-                      className={`px-2 py-1 rounded-full ${getStatusColor(
-                        appointment.status
-                      )}`}
-                    >
-                      <Text className="text-xs font-rubik-medium">
+              <Pressable
+                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
+                onPress={() => {
+                  // Randevu detayına yönlendirme
+                }}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1">
+                    <View className="flex-row items-center space-x-2 mb-2">
+                      <View
+                        className={`w-2 h-2 rounded-full ${
+                          appointment.status === "confirmed"
+                            ? "bg-neutral-400"
+                            : appointment.status === "pending"
+                            ? "bg-amber-400"
+                            : appointment.status === "completed"
+                            ? "bg-emerald-400"
+                            : "bg-rose-400"
+                        }`}
+                      />
+                      <Text
+                        className={`${theme.text.secondary} text-sm font-rubik-medium`}
+                      >
                         {appointment.status.toUpperCase()}
                       </Text>
                     </View>
+                    <Text
+                      className={`${theme.text.primary} text-lg font-rubik-medium`}
+                    >
+                      {appointment.designDetails.style}
+                    </Text>
+                    <Text className={`${theme.text.secondary} text-sm mt-1`}>
+                      {appointment.designDetails.size}
+                    </Text>
                   </View>
-                  <Text className="text-black-300 font-rubik-medium mt-2">
-                    {appointment.designDetails.style} -{" "}
-                    {appointment.designDetails.size}
-                  </Text>
-                  <Text className="text-black-100 text-sm font-rubik mt-1">
-                    {new Date(appointment.dateTime).toLocaleString("tr-TR")}
+                  <Text
+                    className={`${theme.text.accent} text-lg font-rubik-bold`}
+                  >
+                    {appointment.price}₺
                   </Text>
                 </View>
-                <Text className="text-primary-300 font-rubik-medium">
-                  {appointment.price}₺
-                </Text>
-              </View>
+                <View className={`mt-3 pt-3 border-t ${theme.card.border}`}>
+                  <Text className={`${theme.text.secondary} text-sm`}>
+                    {new Date(appointment.dateTime).toLocaleString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              </Pressable>
             </Animated.View>
           ))}
         </View>
 
-        {/* Recent Portfolio Works */}
-        <View className="mt-8 px-4 pb-8">
-          <Animated.Text
-            entering={SlideInRight.delay(300).springify()}
-            className="text-black-300 text-lg font-rubik-medium mb-4"
-          >
-            Son Çalışmalar
-          </Animated.Text>
+        {/* Portfolyo - Yeniden Tasarlandı */}
+        <View className="mt-8 px-6 pb-8">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className={`${theme.text.primary} text-xl font-rubik-bold`}>
+              Son Çalışmalar
+            </Text>
+            <Pressable onPress={() => router.push("/(root)/(tabs)/portfolio")}>
+              <Text className={`${theme.text.accent} font-rubik-medium`}>
+                Tümünü Gör
+              </Text>
+            </Pressable>
+          </View>
 
           <ScrollView
             horizontal
@@ -268,21 +334,30 @@ export default function Index() {
               <Animated.View
                 key={work._id}
                 entering={FadeInRight.delay(500 + index * 100).springify()}
-                className="w-48 rounded-2xl overflow-hidden"
+                className="w-64"
               >
-                <Image
-                  source={{ uri: work.images[0] }}
-                  className="w-full h-48 rounded-2xl"
-                  resizeMode="cover"
-                />
-                <View className="absolute bottom-0 left-0 right-0 p-3 bg-black/50">
-                  <Text className="text-white font-rubik-medium">
-                    {work.title}
-                  </Text>
-                  <Text className="text-white/80 text-xs font-rubik">
-                    {work.style}
-                  </Text>
-                </View>
+                <Pressable
+                  className={`${theme.card.background} rounded-2xl overflow-hidden border ${theme.card.border}`}
+                >
+                  <Image
+                    source={{ uri: work.images[0] }}
+                    className="w-full h-64 rounded-t-2xl"
+                    resizeMode="cover"
+                  />
+                  <View className="p-3">
+                    <Text
+                      className={`${theme.text.primary} text-lg font-rubik-medium`}
+                    >
+                      {work.title}
+                    </Text>
+                    <View className="flex-row items-center space-x-2 mt-1">
+                      <View className="w-1.5 h-1.5 rounded-full bg-primary-300" />
+                      <Text className={`${theme.text.secondary} text-sm`}>
+                        {work.style}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
               </Animated.View>
             ))}
           </ScrollView>

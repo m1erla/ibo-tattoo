@@ -12,10 +12,12 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useGlobalContext } from "@/lib/global-provider";
 import { useRouter } from "expo-router";
 import icons from "@/constants/icons";
+import { useTheme } from "@/lib/theme-provider";
 
 export default function Profile() {
   const { user, logout, refetch } = useGlobalContext();
   const router = useRouter();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -59,6 +61,14 @@ export default function Profile() {
             <Pressable className="p-4 flex-row items-center justify-between">
               <Text className="font-rubik text-black-300">Dil</Text>
               <Text className="font-rubik text-black-100">Türkçe</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={toggleTheme}
+              className="flex-row items-center justify-between p-4 bg-white rounded-xl"
+            >
+              <Text className="font-rubik-medium">Koyu Tema</Text>
+              <Switch value={isDarkMode} onValueChange={toggleTheme} />
             </Pressable>
           </View>
         </View>

@@ -9,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import "./global.css";
 import { GlobalProvider } from "@/lib/global-provider";
+import { ThemeProvider } from "@/lib/theme-provider";
 
 const { width, height } = Dimensions.get("window");
 
@@ -81,10 +82,12 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <GlobalProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-      </GlobalProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <GlobalProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </GlobalProvider>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }

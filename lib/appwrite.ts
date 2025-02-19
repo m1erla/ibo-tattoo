@@ -1,36 +1,30 @@
-import { Client, Databases, Storage, Account, OAuthProvider, Avatars } from "react-native-appwrite";
+import { Client, Databases, Storage, Account, OAuthProvider, Avatars, Functions } from "react-native-appwrite";
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
-
-export const config = {
-    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
-    platform: "com.m1erla.ibo-tattoo",
-    projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
-    userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID,
-    appointmentsCollectionId: process.env.EXPO_PUBLIC_APPWRITE_APPOINTMENTS_COLLECTION_ID,
-    portfolioCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PORTFOLIO_COLLECTION_ID,
-    portfolioImagesBucketId: process.env.EXPO_PUBLIC_APPWRITE_PORTFOLIO_IMAGES_BUCKET_ID,
-}
+import config from "@/constants/config";
 
 export const appwriteConfig = {
     endpoint: config.endpoint,
-    platform: config.platform,
+    platform: "com.m1erla.ibo-tattoo",
     projectId: config.projectId,
     databaseId: config.databaseId,
     userCollectionId: config.userCollectionId,
+    pushTokenCollectionId: config.pushTokenCollectionId,
+    appointmentsCollectionId: config.appointmentsCollectionId,
+    portfolioCollectionId: config.portfolioCollectionId,
 }
 
-export const client = new Client()
+// Appwrite client
+const client = new Client()
     .setEndpoint(config.endpoint!)
-    .setProject(config.projectId!)
-    .setPlatform(config.platform!)
+    .setProject(config.projectId!);
+
 
 export const databases = new Databases(client)
 export const storage = new Storage(client)
 export const account = new Account(client)
 export const avatar = new Avatars(client)
-
+export const functions = new Functions(client)
 
 export async function login() {
   try {
@@ -132,3 +126,5 @@ export async function getCurrentUser() {
     return null;
   }
 }
+
+export { client }; // Client'ı da export et

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,15 +14,32 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { appointmentService } from "@/lib/services/appointment";
 import { useGlobalContext } from "@/lib/global-provider";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
+import { databases, appwriteConfig } from "@/lib/appwrite";
 
 const TATTOO_SIZES = ["Küçük", "Orta", "Büyük", "Çok Büyük"];
 const TATTOO_STYLES = ["Minimal", "Realistik", "Traditional", "Tribal"];
 const BODY_PARTS = ["Kol", "Bacak", "Sırt", "Göğüs", "Bilek"];
 
+interface AppointmentDetails {
+  $id: string;
+  dateTime: string;
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  designDetails: {
+    size: string;
+    style: string;
+    placement: string;
+  };
+  price: number;
+  notes?: string;
+  clientId: string;
+}
+
 export default function AppointmentDetails() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { date, time } = params;
+  const { id, date, time, status } = params;
 
   const [size, setSize] = useState("");
   const [style, setStyle] = useState("");
@@ -30,6 +47,42 @@ export default function AppointmentDetails() {
   const [notes, setNotes] = useState("");
   const { user } = useGlobalContext();
   const [loading, setLoading] = useState(false);
+  const [appointment, setAppointment] = useState<AppointmentDetails | null>(
+    null
+  );
+
+  useEffect(() => {
+    const fetchAppointmentDetails = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      try {
+        const response = await databases.getDocument(
+          appwriteConfig.databaseId!,
+          appwriteConfig.appointmentsCollectionId!,
+          id as string
+        );
+
+        if (response) {
+          setAppointment({
+            $id: response.$id,
+            dateTime: response.dateTime,
+            status: response.status,
+            designDetails: JSON.parse(response.designDetails),
+            price: response.price,
+            notes: response.notes,
+            clientId: response.clientId,
+          });
+        }
+      } catch (error) {
+        console.error("Randevu detayları getirilemedi:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointmentDetails();
+  }, [id]);
 
   const handleSubmit = async () => {
     if (!size || !style || !placement) {
@@ -81,9 +134,17 @@ export default function AppointmentDetails() {
           <Text className="text-2xl font-rubik-semibold text-black-300">
             Randevu Detayları
           </Text>
-          <Text className="text-black-100 font-rubik mt-1">
-            {`${date} - ${time}`}
-          </Text>
+          {appointment ? (
+            <Text className="text-black-100 font-rubik mt-1">
+              {format(new Date(appointment.dateTime), "d MMMM yyyy - HH:mm", {
+                locale: tr,
+              })}
+            </Text>
+          ) : (
+            <Text className="text-black-100 font-rubik mt-1">
+              {`${date || "Tarih yok"} - ${time || "Saat yok"}`}
+            </Text>
+          )}
         </View>
 
         {/* Dövme Boyutu */}

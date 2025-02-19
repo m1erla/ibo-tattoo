@@ -1,6 +1,9 @@
-import { databases, config } from "@/lib/appwrite";
+import { databases, appwriteConfig } from "@/lib/appwrite";
 import { ID } from "react-native-appwrite";
 import { Query } from "react-native-appwrite";
+import { notificationService } from "./notification";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 
 export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
@@ -22,8 +25,8 @@ export const appointmentService = {
   create: async (data: CreateAppointmentDTO) => {
     try {
       const response = await databases.createDocument(
-        config.databaseId!,
-        config.appointmentsCollectionId!,
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
         ID.unique(),
         {
           clientId: data.clientId,
@@ -32,9 +35,49 @@ export const appointmentService = {
           notes: data.notes || "",
           price: calculatePrice(data.designDetails),
           status: "pending",
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(),
         }
       );
+
+      // Admin'lere bildirim gönder
+      try {
+        // Admin kullanıcıları bul
+        const adminUsers = await databases.listDocuments(
+          appwriteConfig.databaseId!,
+          appwriteConfig.userCollectionId!,
+          [Query.equal("role", "admin")]
+        );
+
+        // Müşteri bilgilerini al
+        const client = await databases.getDocument(
+          appwriteConfig.databaseId!,
+          appwriteConfig.userCollectionId!,
+          data.clientId
+        );
+
+        const designDetails = JSON.parse(response.designDetails);
+        const price = calculatePrice(designDetails);
+
+        const notificationMessage = 
+          `${format(new Date(data.dateTime), "d MMMM yyyy HH:mm", { locale: tr })}\n` +
+          `Müşteri: ${client.name}\n` +
+          `Dövme: ${designDetails.style} - ${designDetails.size}\n` +
+          `Bölge: ${designDetails.placement}\n` +
+          `Fiyat: ${price} TL`;
+
+        const adminIds = adminUsers.documents.map(admin => admin.$id);
+
+        if (adminIds.length > 0) {
+          await notificationService.sendPushNotification(
+            adminIds,
+            "Yeni Randevu Talebi",
+            notificationMessage
+          );
+        }
+      } catch (error) {
+        console.error("Admin bildirimi gönderilemedi:", error);
+      }
+
       return response;
     } catch (error) {
       console.error("Randevu oluşturma hatası:", error);
@@ -45,7 +88,6 @@ export const appointmentService = {
   // Randevu güncelleme
   update: async (appointmentId: string, data: Partial<CreateAppointmentDTO>) => {
     try {
-      // designDetails varsa JSON'a çevir
       const updateData = {
         ...data,
         ...(data.designDetails && {
@@ -54,20 +96,48 @@ export const appointmentService = {
       };
 
       const response = await databases.updateDocument(
-        config.databaseId!,
-        config.appointmentsCollectionId!,
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
         appointmentId,
         updateData
       );
 
       // Bildirim gönder
       if (data.status) {
-        const message = data.status === "confirmed" 
-          ? "Randevunuz onaylandı!"
-          : "Randevunuz reddedildi.";
-          
-        // TODO: Push notification implementation
-        console.log("Bildirim gönderilecek:", message);
+        const appointment = await databases.getDocument(
+          appwriteConfig.databaseId!,
+          appwriteConfig.appointmentsCollectionId!,
+          appointmentId
+        );
+
+        const designDetails = JSON.parse(appointment.designDetails);
+        const dateStr = format(
+          new Date(appointment.dateTime),
+          "d MMMM yyyy HH:mm",
+          { locale: tr }
+        );
+
+        let message = "";
+        if (data.status === "confirmed") {
+          message = 
+            `Randevunuz onaylandı!\n` +
+            `Tarih: ${dateStr}\n` +
+            `Dövme: ${designDetails.style} - ${designDetails.size}\n` +
+            `Bölge: ${designDetails.placement}\n` +
+            `Fiyat: ${appointment.price} TL\n\n` +
+            `Görüşmek üzere!`;
+        } else {
+          message = 
+            `Randevunuz reddedildi.\n` +
+            `Tarih: ${dateStr}\n` +
+            `Lütfen yeni bir randevu oluşturun.`;
+        }
+
+        await notificationService.sendPushNotification(
+          [appointment.clientId],
+          "Randevu Durumu",
+          message
+        );
       }
 
       return response;
@@ -81,8 +151,8 @@ export const appointmentService = {
   delete: async (appointmentId: string) => {
     try {
       await databases.deleteDocument(
-        config.databaseId!,
-        config.appointmentsCollectionId!,
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
         appointmentId
       );
       return true;
@@ -96,8 +166,8 @@ export const appointmentService = {
   list: async (queries: any[] = []) => {
     try {
       const response = await databases.listDocuments(
-        config.databaseId!,
-        config.appointmentsCollectionId!,
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
         queries
       );
       return response;
@@ -112,8 +182,8 @@ export const appointmentService = {
     try {
       // O gün için olan tüm randevuları getir
       const response = await databases.listDocuments(
-        config.databaseId!,
-        config.appointmentsCollectionId!,
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
         [
           Query.greaterThanEqual("dateTime", `${date}T00:00:00.000Z`),
           Query.lessThan("dateTime", `${date}T23:59:59.999Z`),

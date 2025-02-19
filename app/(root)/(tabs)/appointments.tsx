@@ -68,6 +68,7 @@ interface Appointment {
   designDetails: {
     size: string;
     style: string;
+    placement: string;
   };
   clientId: string;
 }
@@ -79,17 +80,16 @@ export default function Appointments() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.$id) return;
     fetchAppointments();
-  }, []);
+  }, [user]);
 
   const fetchAppointments = async () => {
-    if (!user?.$id) return;
-
     try {
       const response = await appointmentService.list([
-        ...(user.role === "admin"
+        ...(user?.role === "admin"
           ? [] // Admin için filtre yok
-          : [Query.equal("clientId", user.$id)]), // Client için sadece kendi randevuları
+          : [Query.equal("clientId", user?.$id!)]), // Client için sadece kendi randevuları
         Query.orderDesc("dateTime"),
       ]);
 
@@ -99,7 +99,7 @@ export default function Appointments() {
           dateTime: doc.dateTime,
           status: doc.status,
           designDetails: JSON.parse(doc.designDetails),
-          clientId: doc.clientId, // Admin için müşteri bilgisini de ekleyelim
+          clientId: doc.clientId,
         }))
       );
     } catch (error) {
@@ -122,35 +122,19 @@ export default function Appointments() {
     }
   };
 
-  const renderAppointmentActions = (appointment: Appointment) => {
-    if (user?.role !== "admin") return null;
-    if (appointment.status !== "pending") return null;
-
+  if (loading) {
     return (
-      <View className="flex-row gap-2 mt-3">
-        <Pressable
-          onPress={() => handleStatusChange(appointment.$id, "confirmed")}
-          className="flex-1 bg-primary-300 py-2 rounded-xl"
-        >
-          <Text className="text-white font-rubik-medium text-center text-sm">
-            Onayla
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => handleStatusChange(appointment.$id, "cancelled")}
-          className="flex-1 bg-red-500 py-2 rounded-xl"
-        >
-          <Text className="text-white font-rubik-medium text-center text-sm">
-            Reddet
-          </Text>
-        </Pressable>
-      </View>
+      <SafeAreaView className="flex-1 bg-accent-100">
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-black-300 font-rubik">Yükleniyor...</Text>
+        </View>
+      </SafeAreaView>
     );
-  };
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-accent-100">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1">
         {/* Header */}
         <View className="px-4 pt-4 flex-row items-center justify-between">
           <View>
@@ -189,70 +173,99 @@ export default function Appointments() {
             {user?.role === "admin" ? "Tüm Randevular" : "Randevularım"}
           </Animated.Text>
 
-          {appointments.map((appointment) => (
-            <Animated.View
-              key={appointment.$id}
-              entering={FadeInDown.delay(400)}
-              className="bg-white p-4 rounded-2xl mb-3"
-            >
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-black-300 font-rubik-medium">
-                    {format(
+          {appointments.length === 0 ? (
+            <Text className="text-black-100 font-rubik text-center mt-4">
+              Henüz randevu bulunmamaktadır.
+            </Text>
+          ) : (
+            appointments.map((appointment) => (
+              <Animated.View
+                key={appointment.$id}
+                entering={FadeInDown.delay(400)}
+                className="bg-white p-4 rounded-2xl mb-3"
+              >
+                <Pressable
+                  onPress={() => {
+                    const appointmentDate = format(
                       new Date(appointment.dateTime),
-                      "d MMMM yyyy - HH:mm",
-                      {
-                        locale: tr,
-                      }
-                    )}
-                  </Text>
-                  <Text className="text-black-100 text-sm font-rubik mt-1">
-                    {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
-                  </Text>
-                  {/* Admin için müşteri bilgisi */}
-                  {user?.role === "admin" && (
-                    <Text className="text-primary-300 text-sm font-rubik mt-1">
-                      Müşteri ID: {appointment.clientId}
-                    </Text>
-                  )}
-                </View>
-                <View
-                  className={`px-3 py-1 rounded-full ${getStatusColor(
-                    appointment.status
-                  )}`}
+                      "yyyy-MM-dd"
+                    );
+                    const appointmentTime = format(
+                      new Date(appointment.dateTime),
+                      "HH:mm"
+                    );
+
+                    router.push({
+                      pathname: "/(root)/(tabs)/appointment-details",
+                      params: {
+                        id: appointment.$id,
+                        date: appointmentDate,
+                        time: appointmentTime,
+                        status: appointment.status,
+                      },
+                    });
+                  }}
                 >
-                  <Text className="text-sm font-rubik-medium">
-                    {getStatusText(appointment.status)}
-                  </Text>
-                </View>
-              </View>
-              {/* Onay/Red butonları */}
-              {user?.role === "admin" && appointment.status === "pending" && (
-                <View className="flex-row gap-2 mt-3">
-                  <Pressable
-                    onPress={() =>
-                      handleStatusChange(appointment.$id, "confirmed")
-                    }
-                    className="flex-1 bg-primary-300 py-2 rounded-xl"
-                  >
-                    <Text className="text-white font-rubik-medium text-center text-sm">
-                      Onayla
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      handleStatusChange(appointment.$id, "cancelled")
-                    }
-                    className="flex-1 bg-red-500 py-2 rounded-xl"
-                  >
-                    <Text className="text-white font-rubik-medium text-center text-sm">
-                      Reddet
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </Animated.View>
-          ))}
+                  <View className="flex-row items-center justify-between">
+                    <View>
+                      <Text className="text-black-300 font-rubik-medium">
+                        {format(
+                          new Date(appointment.dateTime),
+                          "d MMMM yyyy - HH:mm",
+                          {
+                            locale: tr,
+                          }
+                        )}
+                      </Text>
+                      <Text className="text-black-100 text-sm font-rubik mt-1">
+                        {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
+                      </Text>
+                      {user?.role === "admin" && (
+                        <Text className="text-primary-300 text-sm font-rubik mt-1">
+                          Müşteri ID: {appointment.clientId}
+                        </Text>
+                      )}
+                    </View>
+                    <View
+                      className={`px-3 py-1 rounded-full ${getStatusColor(
+                        appointment.status
+                      )}`}
+                    >
+                      <Text className="text-sm font-rubik-medium">
+                        {getStatusText(appointment.status)}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+
+                {/* Admin için onay/red butonları */}
+                {user?.role === "admin" && appointment.status === "pending" && (
+                  <View className="flex-row gap-2 mt-3">
+                    <Pressable
+                      onPress={() =>
+                        handleStatusChange(appointment.$id, "confirmed")
+                      }
+                      className="flex-1 bg-primary-300 py-2 rounded-xl"
+                    >
+                      <Text className="text-white font-rubik-medium text-center text-sm">
+                        Onayla
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() =>
+                        handleStatusChange(appointment.$id, "cancelled")
+                      }
+                      className="flex-1 bg-red-500 py-2 rounded-xl"
+                    >
+                      <Text className="text-white font-rubik-medium text-center text-sm">
+                        Reddet
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </Animated.View>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
