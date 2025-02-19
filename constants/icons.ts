@@ -14,6 +14,7 @@ import send from "@/assets/icons/send.png";
 import shield from "@/assets/icons/shield.png";
 import star from "@/assets/icons/star.png";
 import logout from "@/assets/icons/logout.png";
+import plus from "@/assets/icons/plus.png";
 
 export default {
   google,
@@ -32,4 +33,5 @@ export default {
   shield,
   star,
   logout,
+  plus,
 };

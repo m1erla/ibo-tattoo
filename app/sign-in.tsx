@@ -43,7 +43,7 @@ const Auth = () => {
     <View className="flex-1 bg-black">
       {/* Background Image */}
       <Image
-        source={images.tattooArt}
+        source={images.background}
         className="absolute w-full h-full"
         style={{ opacity: 0.5 }}
         resizeMode="cover"

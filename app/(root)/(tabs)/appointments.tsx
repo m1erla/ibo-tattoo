@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Pressable, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, LocaleConfig } from "react-native-calendars";
@@ -8,8 +8,14 @@ import Animated, {
   FadeIn,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
+import { useRouter } from "expo-router";
 import { useGlobalContext } from "@/lib/global-provider";
+import { appointmentService } from "@/lib/services/appointment";
 import icons from "@/constants/icons";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
+import { AppointmentStatus } from "@/lib/services/appointment";
+import { Query } from "react-native-appwrite";
 
 // Türkçe lokalizasyon ayarları
 LocaleConfig.locales["tr"] = {
@@ -55,9 +61,87 @@ LocaleConfig.locales["tr"] = {
 
 LocaleConfig.defaultLocale = "tr";
 
+interface Appointment {
+  $id: string;
+  dateTime: string;
+  status: AppointmentStatus;
+  designDetails: {
+    size: string;
+    style: string;
+  };
+}
+
 export default function Appointments() {
+  const router = useRouter();
   const { user } = useGlobalContext();
-  const [selectedDate, setSelectedDate] = useState("");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    if (!user?.$id) return;
+
+    try {
+      const response = await appointmentService.list([
+        Query.equal("clientId", user.$id),
+        Query.orderDesc("dateTime"),
+      ]);
+      setAppointments(
+        response.documents.map((doc: any) => ({
+          $id: doc.$id,
+          dateTime: doc.dateTime,
+          status: doc.status,
+          designDetails: JSON.parse(doc.designDetails),
+        }))
+      );
+    } catch (error) {
+      console.error("Randevuları getirme hatası:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (
+    appointmentId: string,
+    newStatus: AppointmentStatus
+  ) => {
+    try {
+      await appointmentService.update(appointmentId, { status: newStatus });
+      // Listeyi güncelle
+      fetchAppointments();
+    } catch (error) {
+      console.error("Randevu durumu güncellenirken hata:", error);
+    }
+  };
+
+  const renderAppointmentActions = (appointment: Appointment) => {
+    if (user?.role !== "admin") return null;
+    if (appointment.status !== "pending") return null;
+
+    return (
+      <View className="flex-row gap-2 mt-3">
+        <Pressable
+          onPress={() => handleStatusChange(appointment.$id, "confirmed")}
+          className="flex-1 bg-primary-300 py-2 rounded-xl"
+        >
+          <Text className="text-white font-rubik-medium text-center text-sm">
+            Onayla
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => handleStatusChange(appointment.$id, "cancelled")}
+          className="flex-1 bg-red-500 py-2 rounded-xl"
+        >
+          <Text className="text-white font-rubik-medium text-center text-sm">
+            Reddet
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-accent-100">
@@ -75,98 +159,98 @@ export default function Appointments() {
               entering={FadeInDown.delay(200)}
               className="text-black-100 font-rubik mt-1"
             >
-              Uygun tarihi seçin
+              Randevularınızı yönetin
             </Animated.Text>
           </View>
 
-          <Animated.View
-            entering={FadeIn.delay(300)}
-            className="bg-white rounded-full p-2"
+          <Pressable
+            onPress={() => router.push("/(root)/(tabs)/create-appointment")}
+            className="bg-primary-300 p-2 rounded-full"
           >
             <Image
-              source={icons.bell}
+              source={icons.plus}
               className="w-6 h-6"
-              style={{ tintColor: "#191D31" }}
+              style={{ tintColor: "#ffffff" }}
             />
-          </Animated.View>
+          </Pressable>
         </View>
 
-        {/* Calendar */}
-        <Animated.View entering={SlideInRight.delay(400)} className="mt-6 px-4">
-          <BlurView intensity={30} className="overflow-hidden rounded-3xl">
-            <Calendar
-              theme={{
-                calendarBackground: "transparent",
-                todayTextColor: "#0061FF",
-                selectedDayBackgroundColor: "#0061FF",
-                selectedDayTextColor: "#ffffff",
-                textDayFontFamily: "Rubik-Regular",
-                textMonthFontFamily: "Rubik-Medium",
-                textDayHeaderFontFamily: "Rubik-Medium",
-                arrowColor: "#0061FF",
-                dotColor: "#0061FF",
-                selectedDotColor: "#ffffff",
-                monthTextColor: "#191D31",
-                dayTextColor: "#191D31",
-              }}
-              enableSwipeMonths
-              onDayPress={(day: any) => setSelectedDate(day.dateString)}
-              markedDates={{
-                [selectedDate]: { selected: true },
-              }}
-            />
-          </BlurView>
-        </Animated.View>
-
-        {/* Available Time Slots */}
-        <View className="mt-8 px-4">
-          <Animated.Text
-            entering={FadeInDown.delay(500)}
-            className="text-lg font-rubik-medium text-black-300 mb-4"
-          >
-            Müsait Saatler
-          </Animated.Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="space-x-3"
-          >
-            {["10:00", "11:30", "13:00", "14:30", "16:00"].map(
-              (time, index) => (
-                <Animated.View
-                  key={time}
-                  entering={FadeInDown.delay(600 + index * 100)}
-                >
-                  <BlurView
-                    intensity={30}
-                    className="overflow-hidden rounded-2xl"
-                  >
-                    <Pressable className="px-6 py-3">
-                      <Text className="font-rubik-medium text-black-300">
-                        {time}
-                      </Text>
-                    </Pressable>
-                  </BlurView>
-                </Animated.View>
-              )
-            )}
-          </ScrollView>
-        </View>
-
-        {/* Upcoming Appointments */}
+        {/* Randevu Listesi */}
         <View className="mt-8 px-4 pb-8">
           <Animated.Text
-            entering={FadeInDown.delay(800)}
+            entering={FadeInDown.delay(300)}
             className="text-lg font-rubik-medium text-black-300 mb-4"
           >
-            Yaklaşan Randevular
+            {user?.role === "admin" ? "Tüm Randevular" : "Randevularım"}
           </Animated.Text>
 
-          {/* Appointment Cards */}
-          {/* Buraya randevu kartları gelecek */}
+          {appointments.map((appointment) => (
+            <Animated.View
+              key={appointment.$id}
+              entering={FadeInDown.delay(400)}
+              className="bg-white p-4 rounded-2xl mb-3"
+            >
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text className="text-black-300 font-rubik-medium">
+                    {format(
+                      new Date(appointment.dateTime),
+                      "d MMMM yyyy - HH:mm",
+                      {
+                        locale: tr,
+                      }
+                    )}
+                  </Text>
+                  <Text className="text-black-100 text-sm font-rubik mt-1">
+                    {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
+                  </Text>
+                </View>
+                <View
+                  className={`px-3 py-1 rounded-full ${getStatusColor(
+                    appointment.status
+                  )}`}
+                >
+                  <Text className="text-sm font-rubik-medium">
+                    {getStatusText(appointment.status)}
+                  </Text>
+                </View>
+              </View>
+              {/* Admin için onay/red butonları */}
+              {renderAppointmentActions(appointment)}
+            </Animated.View>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const getStatusColor = (status: AppointmentStatus) => {
+  switch (status) {
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "confirmed":
+      return "bg-blue-100 text-blue-800";
+    case "completed":
+      return "bg-green-100 text-green-800";
+    case "cancelled":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const getStatusText = (status: AppointmentStatus) => {
+  switch (status) {
+    case "pending":
+      return "Beklemede";
+    case "confirmed":
+      return "Onaylandı";
+    case "completed":
+      return "Tamamlandı";
+    case "cancelled":
+      return "İptal Edildi";
+    default:
+      return status;
+  }
+};
