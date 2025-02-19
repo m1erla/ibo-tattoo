@@ -13,6 +13,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { tr } from "date-fns/locale";
 import { format, addDays, setHours, setMinutes } from "date-fns";
 import { appointmentService } from "@/lib/services/appointment";
+import { ID } from "react-native-appwrite";
 
 const TIME_SLOTS = [
   "10:00",
@@ -142,10 +143,11 @@ export default function CreateAppointment() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(root)/(tabs)/appointment-details",
+                  pathname: `/appointments/${ID.unique()}`,
                   params: {
                     date: selectedDate,
                     time: selectedTime,
+                    isNew: "true",
                   },
                 })
               }

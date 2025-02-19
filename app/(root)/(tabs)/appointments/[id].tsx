@@ -7,6 +7,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,9 +15,10 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import { appointmentService } from "@/lib/services/appointment";
 import { useGlobalContext } from "@/lib/global-provider";
-import { format } from "date-fns";
+import { format, parse, addMinutes } from "date-fns";
 import { tr } from "date-fns/locale";
 import { databases, appwriteConfig } from "@/lib/appwrite";
+import { Calendar } from "react-native-calendars";
 
 const TATTOO_SIZES = ["Küçük", "Orta", "Büyük", "Çok Büyük"];
 const TATTOO_STYLES = ["Minimal", "Realistik", "Traditional", "Tribal"];
@@ -39,7 +41,7 @@ interface AppointmentDetails {
 export default function AppointmentDetails() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { id, date, time, status } = params;
+  const { id, date, time, status, isNew } = params;
 
   const [size, setSize] = useState("");
   const [style, setStyle] = useState("");
@@ -50,10 +52,15 @@ export default function AppointmentDetails() {
   const [appointment, setAppointment] = useState<AppointmentDetails | null>(
     null
   );
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [newDateTime, setNewDateTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     const fetchAppointmentDetails = async () => {
-      if (!id) return;
+      if (!id || isNew) return;
 
       setLoading(true);
       try {
@@ -82,7 +89,7 @@ export default function AppointmentDetails() {
     };
 
     fetchAppointmentDetails();
-  }, [id]);
+  }, [id, isNew]);
 
   const handleSubmit = async () => {
     if (!size || !style || !placement) {
@@ -124,6 +131,35 @@ export default function AppointmentDetails() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Randevu İptali
+  const handleCancel = async () => {
+    if (!appointment) return;
+
+    try {
+      await appointmentService.cancel(appointment.$id, cancelReason);
+      Alert.alert("Başarılı", "Randevu iptal edildi");
+      router.back();
+    } catch (error) {
+      Alert.alert("Hata", "Randevu iptal edilemedi");
+    }
+  };
+
+  // Yeniden Planlama
+  const handleReschedule = async () => {
+    if (!appointment) return;
+
+    try {
+      await appointmentService.reschedule(
+        appointment.$id,
+        newDateTime.toISOString()
+      );
+      Alert.alert("Başarılı", "Randevu yeniden planlandı");
+      router.back();
+    } catch (error) {
+      Alert.alert("Hata", "Randevu yeniden planlanamadı");
     }
   };
 
@@ -276,7 +312,149 @@ export default function AppointmentDetails() {
             )}
           </Pressable>
         </Animated.View>
+
+        {appointment && (
+          <View className="flex-row space-x-4 mt-4 px-4">
+            <Pressable
+              onPress={() => setShowCancelModal(true)}
+              className="flex-1 bg-red-50 p-4 rounded-xl"
+            >
+              <Text className="text-red-500 text-center font-rubik-medium">
+                İptal Et
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setIsRescheduling(true)}
+              className="flex-1 bg-primary-50 p-4 rounded-xl"
+            >
+              <Text className="text-primary-500 text-center font-rubik-medium">
+                Yeniden Planla
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
+
+      {/* İptal Modalı */}
+      <Modal visible={showCancelModal} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-center p-4">
+          <View className="bg-white rounded-2xl p-4">
+            <Text className="text-lg font-rubik-medium text-black-300 mb-4">
+              Randevu İptali
+            </Text>
+            <TextInput
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              placeholder="İptal sebebi"
+              className="bg-gray-50 p-4 rounded-xl mb-4"
+            />
+            <View className="flex-row space-x-4">
+              <Pressable
+                onPress={() => setShowCancelModal(false)}
+                className="flex-1 p-4 rounded-xl bg-gray-100"
+              >
+                <Text className="text-center font-rubik-medium">Vazgeç</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleCancel}
+                className="flex-1 p-4 rounded-xl bg-red-500"
+              >
+                <Text className="text-white text-center font-rubik-medium">
+                  İptal Et
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Yeniden Planlama Modalı */}
+      <Modal visible={isRescheduling} animationType="slide" transparent>
+        <View className="flex-1 bg-black/50 justify-center p-4">
+          <View className="bg-white rounded-2xl p-4">
+            <Text className="text-lg font-rubik-medium text-black-300 mb-4">
+              Yeni Tarih Seç
+            </Text>
+
+            <Calendar
+              onDayPress={(day: any) => {
+                const selectedDate = parse(
+                  day.dateString,
+                  "yyyy-MM-dd",
+                  new Date()
+                );
+                setNewDateTime(selectedDate);
+              }}
+              markedDates={{
+                [format(newDateTime, "yyyy-MM-dd")]: {
+                  selected: true,
+                  selectedColor: "#0061FF",
+                },
+              }}
+              minDate={format(new Date(), "yyyy-MM-dd")}
+            />
+
+            {/* Saat Seçimi */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mt-4"
+            >
+              {Array.from({ length: 24 }, (_, i) => {
+                const time = addMinutes(
+                  new Date().setHours(9, 0, 0, 0),
+                  i * 30
+                );
+                const timeStr = format(time, "HH:mm");
+                const isSelected = format(newDateTime, "HH:mm") === timeStr;
+
+                return (
+                  <Pressable
+                    key={timeStr}
+                    onPress={() => {
+                      const [hours, minutes] = timeStr.split(":").map(Number);
+                      setNewDateTime((prev) => {
+                        const updated = new Date(prev);
+                        updated.setHours(hours, minutes);
+                        return updated;
+                      });
+                    }}
+                    className={`px-4 py-2 rounded-full mr-2 ${
+                      isSelected ? "bg-primary-300" : "bg-gray-100"
+                    }`}
+                  >
+                    <Text
+                      className={`font-rubik-medium ${
+                        isSelected ? "text-white" : "text-black-300"
+                      }`}
+                    >
+                      {timeStr}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <View className="flex-row space-x-4 mt-4">
+              <Pressable
+                onPress={() => setIsRescheduling(false)}
+                className="flex-1 p-4 rounded-xl bg-gray-100"
+              >
+                <Text className="text-center font-rubik-medium">Vazgeç</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleReschedule}
+                className="flex-1 p-4 rounded-xl bg-primary-300"
+              >
+                <Text className="text-white text-center font-rubik-medium">
+                  Güncelle
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

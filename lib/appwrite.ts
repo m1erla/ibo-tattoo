@@ -9,7 +9,7 @@ export const appwriteConfig = {
     projectId: config.projectId,
     databaseId: config.databaseId,
     userCollectionId: config.userCollectionId,
-    pushTokenCollectionId: config.pushTokenCollectionId,
+    pushTokensCollectionId: config.pushTokensCollectionId,
     appointmentsCollectionId: config.appointmentsCollectionId,
     portfolioCollectionId: config.portfolioCollectionId,
 }

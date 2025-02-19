@@ -14,17 +14,20 @@ export default function TabLayout() {
           paddingBottom: 10,
         },
         headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: "#0061FF",
+        tabBarInactiveTintColor: "#666876",
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Ana Sayfa",
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Image
               source={icons.home}
               className="w-6 h-6"
-              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+              style={{ tintColor: color }}
             />
           ),
         }}
@@ -34,11 +37,11 @@ export default function TabLayout() {
         name="appointments"
         options={{
           title: "Randevular",
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Image
               source={icons.calendar}
               className="w-6 h-6"
-              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+              style={{ tintColor: color }}
             />
           ),
         }}
@@ -48,11 +51,11 @@ export default function TabLayout() {
         name="portfolio"
         options={{
           title: "Portfolyo",
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Image
               source={icons.gallery}
               className="w-6 h-6"
-              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+              style={{ tintColor: color }}
             />
           ),
         }}
@@ -62,28 +65,20 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profil",
-          tabBarIcon: ({ focused }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Image
               source={icons.person}
               className="w-6 h-6"
-              style={{ tintColor: focused ? "#0061FF" : "#666876" }}
+              style={{ tintColor: color }}
             />
           ),
-        }}
-      />
-
-      {/* Gizli ekranlar - Tab bar'da gösterilmeyecek */}
-      <Tabs.Screen
-        name="appointment-details"
-        options={{
-          href: null, // Bu ekranı URL'de gizle
         }}
       />
 
       <Tabs.Screen
         name="create-appointment"
         options={{
-          href: null, // Bu ekranı URL'de gizle
+          href: null,
         }}
       />
     </Tabs>

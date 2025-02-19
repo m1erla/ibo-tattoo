@@ -178,93 +178,95 @@ export default function Appointments() {
               Henüz randevu bulunmamaktadır.
             </Text>
           ) : (
-            appointments.map((appointment) => (
-              <Animated.View
-                key={appointment.$id}
-                entering={FadeInDown.delay(400)}
-                className="bg-white p-4 rounded-2xl mb-3"
-              >
-                <Pressable
-                  onPress={() => {
-                    const appointmentDate = format(
-                      new Date(appointment.dateTime),
-                      "yyyy-MM-dd"
-                    );
-                    const appointmentTime = format(
-                      new Date(appointment.dateTime),
-                      "HH:mm"
-                    );
+            appointments.map((appointment) => {
+              const appointmentDate = format(
+                new Date(appointment.dateTime),
+                "yyyy-MM-dd"
+              );
+              const appointmentTime = format(
+                new Date(appointment.dateTime),
+                "HH:mm"
+              );
 
-                    router.push({
-                      pathname: "/(root)/(tabs)/appointment-details",
-                      params: {
-                        id: appointment.$id,
-                        date: appointmentDate,
-                        time: appointmentTime,
-                        status: appointment.status,
-                      },
-                    });
-                  }}
+              return (
+                <Animated.View
+                  key={appointment.$id}
+                  entering={FadeInDown.delay(400)}
+                  className="bg-white p-4 rounded-2xl mb-3"
                 >
-                  <View className="flex-row items-center justify-between">
-                    <View>
-                      <Text className="text-black-300 font-rubik-medium">
-                        {format(
-                          new Date(appointment.dateTime),
-                          "d MMMM yyyy - HH:mm",
-                          {
-                            locale: tr,
-                          }
-                        )}
-                      </Text>
-                      <Text className="text-black-100 text-sm font-rubik mt-1">
-                        {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
-                      </Text>
-                      {user?.role === "admin" && (
-                        <Text className="text-primary-300 text-sm font-rubik mt-1">
-                          Müşteri ID: {appointment.clientId}
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: `/appointments/${appointment.$id}`,
+                        params: {
+                          date: appointmentDate,
+                          time: appointmentTime,
+                          status: appointment.status,
+                        },
+                      })
+                    }
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <View>
+                        <Text className="text-black-300 font-rubik-medium">
+                          {format(
+                            new Date(appointment.dateTime),
+                            "d MMMM yyyy - HH:mm",
+                            {
+                              locale: tr,
+                            }
+                          )}
                         </Text>
-                      )}
+                        <Text className="text-black-100 text-sm font-rubik mt-1">
+                          {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
+                        </Text>
+                        {user?.role === "admin" && (
+                          <Text className="text-primary-300 text-sm font-rubik mt-1">
+                            Müşteri ID: {appointment.clientId}
+                          </Text>
+                        )}
+                      </View>
+                      <View
+                        className={`px-3 py-1 rounded-full ${getStatusColor(
+                          appointment.status
+                        )}`}
+                      >
+                        <Text className="text-sm font-rubik-medium">
+                          {getStatusText(appointment.status)}
+                        </Text>
+                      </View>
                     </View>
-                    <View
-                      className={`px-3 py-1 rounded-full ${getStatusColor(
-                        appointment.status
-                      )}`}
-                    >
-                      <Text className="text-sm font-rubik-medium">
-                        {getStatusText(appointment.status)}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
+                  </Pressable>
 
-                {/* Admin için onay/red butonları */}
-                {user?.role === "admin" && appointment.status === "pending" && (
-                  <View className="flex-row gap-2 mt-3">
-                    <Pressable
-                      onPress={() =>
-                        handleStatusChange(appointment.$id, "confirmed")
-                      }
-                      className="flex-1 bg-primary-300 py-2 rounded-xl"
-                    >
-                      <Text className="text-white font-rubik-medium text-center text-sm">
-                        Onayla
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() =>
-                        handleStatusChange(appointment.$id, "cancelled")
-                      }
-                      className="flex-1 bg-red-500 py-2 rounded-xl"
-                    >
-                      <Text className="text-white font-rubik-medium text-center text-sm">
-                        Reddet
-                      </Text>
-                    </Pressable>
-                  </View>
-                )}
-              </Animated.View>
-            ))
+                  {/* Admin için onay/red butonları */}
+                  {user?.role === "admin" &&
+                    appointment.status === "pending" && (
+                      <View className="flex-row gap-2 mt-3">
+                        <Pressable
+                          onPress={() =>
+                            handleStatusChange(appointment.$id, "confirmed")
+                          }
+                          className="flex-1 bg-primary-300 py-2 rounded-xl"
+                        >
+                          <Text className="text-white font-rubik-medium text-center text-sm">
+                            Onayla
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() =>
+                            handleStatusChange(appointment.$id, "cancelled")
+                          }
+                          className="flex-1 bg-red-500 py-2 rounded-xl"
+                        >
+                          <Text className="text-white font-rubik-medium text-center text-sm">
+                            Reddet
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+                </Animated.View>
+              );
+            })
           )}
         </View>
       </ScrollView>

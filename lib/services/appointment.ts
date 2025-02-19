@@ -2,7 +2,7 @@ import { databases, appwriteConfig } from "@/lib/appwrite";
 import { ID } from "react-native-appwrite";
 import { Query } from "react-native-appwrite";
 import { notificationService } from "./notification";
-import { format } from "date-fns";
+import { format, addHours, isBefore } from "date-fns";
 import { tr } from "date-fns/locale";
 
 export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -219,6 +219,160 @@ export const appointmentService = {
       return availableSlots;
     } catch (error) {
       console.error("Müsait zaman dilimleri getirme hatası:", error);
+      throw error;
+    }
+  },
+
+  // Randevu İptali
+  cancel: async (appointmentId: string, reason: string) => {
+    try {
+      const appointment = await databases.getDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        appointmentId
+      );
+
+      const updatedAppointment = await databases.updateDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        appointmentId,
+        {
+          status: "cancelled",
+          cancellationReason: reason,
+          updatedAt: new Date(),
+        }
+      );
+
+      // Müşteriye iptal bildirimi gönder
+      await notificationService.sendPushNotification(
+        [appointment.clientId],
+        "Randevu İptali",
+        `${format(new Date(appointment.dateTime), "d MMMM yyyy HH:mm", { locale: tr })} tarihli randevunuz iptal edildi.`
+      );
+
+      return updatedAppointment;
+    } catch (error) {
+      console.error("Randevu iptal hatası:", error);
+      throw error;
+    }
+  },
+
+  // Randevu Yeniden Planlama
+  reschedule: async (appointmentId: string, newDateTime: string) => {
+    try {
+      const appointment = await databases.getDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        appointmentId
+      );
+
+      // Seçilen saatin müsait olup olmadığını kontrol et
+      const existingAppointments = await databases.listDocuments(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        [
+          Query.equal("dateTime", newDateTime),
+          Query.notEqual("status", "cancelled"),
+        ]
+      );
+
+      if (existingAppointments.total > 0) {
+        throw new Error("Seçilen saat dolu");
+      }
+
+      const updatedAppointment = await databases.updateDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        appointmentId,
+        {
+          dateTime: newDateTime,
+          status: "confirmed",
+          updatedAt: new Date(),
+        }
+      );
+
+      // Müşteriye bildirim gönder
+      await notificationService.sendPushNotification(
+        [appointment.clientId],
+        "Randevu Güncellendi",
+        `Randevunuz ${format(new Date(newDateTime), "d MMMM yyyy HH:mm", { locale: tr })} tarihine alındı.`
+      );
+
+      return updatedAppointment;
+    } catch (error) {
+      console.error("Randevu güncelleme hatası:", error);
+      throw error;
+    }
+  },
+
+  // Randevu Hatırlatıcıları
+  scheduleReminders: async (appointmentId: string) => {
+    try {
+      const appointment = await databases.getDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        appointmentId
+      );
+
+      const appointmentDate = new Date(appointment.dateTime);
+      const now = new Date();
+
+      // 24 saat kala hatırlatma
+      const dayBefore = addHours(appointmentDate, -24);
+      if (isBefore(now, dayBefore)) {
+        setTimeout(async () => {
+          await notificationService.sendPushNotification(
+            [appointment.clientId],
+            "Randevu Hatırlatması",
+            `Yarın saat ${format(appointmentDate, "HH:mm", { locale: tr })} randevunuz var.`
+          );
+        }, dayBefore.getTime() - now.getTime());
+      }
+
+      // 1 saat kala hatırlatma
+      const hourBefore = addHours(appointmentDate, -1);
+      if (isBefore(now, hourBefore)) {
+        setTimeout(async () => {
+          await notificationService.sendPushNotification(
+            [appointment.clientId],
+            "Randevu Hatırlatması",
+            `1 saat sonra randevunuz var.`
+          );
+        }, hourBefore.getTime() - now.getTime());
+      }
+    } catch (error) {
+      console.error("Hatırlatıcı planlama hatası:", error);
+    }
+  },
+
+  // Saat dilimi ayarlaması ile randevu oluşturma
+  createWithTimezone: async (data: CreateAppointmentDTO) => {
+    try {
+      // Kullanıcının yerel saat dilimini al
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Tarihi UTC'ye çevir
+      const localDate = new Date(data.dateTime);
+      const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+
+      const response = await databases.createDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        ID.unique(),
+        {
+          ...data,
+          dateTime: utcDate.toISOString(),
+          timezone: userTimezone,
+          createdAt: new Date(),
+        }
+      );
+
+      // Hatırlatıcıları planla
+      await appointmentService.scheduleReminders(response.$id);
+
+      return response;
+    } catch (error) {
+      console.error("Randevu oluşturma hatası:", error);
       throw error;
     }
   },
