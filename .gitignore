@@ -89,6 +89,8 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# typescript
+*.tsbuildinfo
 
 # macOS
 .DS_Store
