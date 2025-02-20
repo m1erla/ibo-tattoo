@@ -6,29 +6,33 @@ import {
   Switch,
   Image,
   Alert,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { FadeInDown } from "react-native-reanimated";
-import { useGlobalContext } from "@/lib/global-provider";
-import { useRouter } from "expo-router";
-import icons from "@/constants/icons";
-import { useTheme } from "@/lib/theme-provider";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useGlobalContext } from '@/lib/global-provider';
+import { useRouter } from 'expo-router';
+import icons from '@/constants/icons';
+import { useTheme } from '@/lib/theme-provider';
 
 export default function Profile() {
   const { user, logout, refetch } = useGlobalContext();
   const router = useRouter();
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { isDarkMode, theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/sign-in");
+    router.replace('/sign-in');
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-accent-100">
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
       <ScrollView className="flex-1">
         <View className="px-4 pt-4">
-          <Text className="text-2xl font-rubik-semibold text-black-300">
+          <Text
+            className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}]`}
+          >
             Profil
           </Text>
         </View>
@@ -38,21 +42,33 @@ export default function Profile() {
           entering={FadeInDown.delay(200).springify()}
           className="mt-6 px-4"
         >
-          <View className="bg-white p-4 rounded-2xl">
-            <Text className="text-lg font-rubik-medium text-black-300">
+          <View
+            className={`p-4 rounded-2xl ${theme.colors.card.background(isDarkMode)}`}
+          >
+            <Text
+              className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+            >
               {user?.name}
             </Text>
-            <Text className="text-black-100 mt-1">{user?.email}</Text>
+            <Text
+              className={`text-[${theme.colors.text.secondary(isDarkMode)}] mt-1`}
+            >
+              {user?.email}
+            </Text>
           </View>
         </Animated.View>
 
         {/* Ayarlar */}
         <View className="mt-6 px-4">
-          <Text className="text-lg font-rubik-medium text-black-300 mb-4">
+          <Text
+            className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+          >
             Ayarlar
           </Text>
 
-          <View className="bg-white rounded-2xl">
+          <View
+            className={`rounded-2xl ${theme.colors.card.background(isDarkMode)}`}
+          >
             <Pressable className="p-4 flex-row items-center justify-between border-b border-gray-100">
               <Text className="font-rubik text-black-300">Bildirimler</Text>
               <Switch />
@@ -65,28 +81,37 @@ export default function Profile() {
 
             <Pressable
               onPress={toggleTheme}
-              className="flex-row items-center justify-between p-4 bg-white rounded-xl"
+              className={`flex-row items-center justify-between p-4 rounded-xl ${theme.colors.card.background(isDarkMode)}`}
             >
-              <Text className="font-rubik-medium">Koyu Tema</Text>
-              <Switch value={isDarkMode} onValueChange={toggleTheme} />
+              <Text
+                className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+              >
+                Koyu Tema
+              </Text>
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{
+                  false: theme.colors.border.primary(false),
+                  true: theme.colors.accent.primary,
+                }}
+                thumbColor={isDarkMode ? '#FFFFFF' : '#F4F4F4'}
+              />
             </Pressable>
           </View>
         </View>
 
-        {/* Logout Button */}
-        <View className="mt-6 px-4">
+        {/* Çıkış Butonu */}
+        <View className="mt-6 px-4 pb-8">
           <Pressable
             onPress={handleLogout}
-            className="bg-red-50 p-4 rounded-2xl flex-row items-center justify-between"
+            className={`p-4 rounded-2xl bg-[${theme.colors.status.cancelled.background(isDarkMode)}]`}
           >
-            <View className="flex-row items-center space-x-3">
-              <Image
-                source={icons.logout}
-                className="w-6 h-6"
-                style={{ tintColor: "#F75555" }}
-              />
-              <Text className="font-rubik text-red-500">Çıkış Yap</Text>
-            </View>
+            <Text
+              className={`text-[${theme.colors.status.cancelled.text(isDarkMode)}] text-center font-rubik-medium`}
+            >
+              Çıkış Yap
+            </Text>
           </Pressable>
         </View>
       </ScrollView>

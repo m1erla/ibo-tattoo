@@ -16,6 +16,7 @@ import { Query } from 'react-native-appwrite';
 import { Models } from 'react-native-appwrite';
 import { Image as RNEImage } from '@rneui/themed';
 import FastImage from 'react-native-fast-image';
+import { useTheme } from '@/lib/theme-provider';
 
 interface PortfolioItem extends Models.Document {
   imageUrl: string;
@@ -28,6 +29,7 @@ export default function Portfolio() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { isDarkMode, theme } = useTheme();
 
   const categories = ['all', 'minimal', 'realistik', 'traditional', 'tribal'];
 
@@ -68,10 +70,14 @@ export default function Portfolio() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-accent-100">
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
       <ScrollView className="flex-1">
         <View className="px-4 pt-4">
-          <Text className="text-2xl font-rubik-semibold text-black-300">
+          <Text
+            className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}]`}
+          >
             Portfolyo
           </Text>
         </View>
@@ -87,14 +93,16 @@ export default function Portfolio() {
               key={category}
               onPress={() => handleCategoryPress(category)}
               className={`px-4 py-2 rounded-full mr-2 ${
-                selectedCategory === category ? 'bg-primary-300' : 'bg-white'
+                selectedCategory === category
+                  ? `bg-[${theme.colors.accent.primary}]`
+                  : `bg-[${theme.colors.card.background(isDarkMode)}]`
               }`}
             >
               <Text
                 className={`font-rubik-medium ${
                   selectedCategory === category
                     ? 'text-white'
-                    : 'text-black-300'
+                    : `text-[${theme.colors.text.primary(isDarkMode)}]`
                 }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}

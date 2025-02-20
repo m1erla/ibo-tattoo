@@ -122,12 +122,25 @@ export default function Index() {
     card: {
       background: isDarkMode ? 'bg-[#1E1E1E]' : 'bg-white',
       border: isDarkMode ? 'border-[#2A2A2A]' : 'border-gray-100',
-      highlight: isDarkMode ? 'bg-[#2A2A2A]' : 'bg-neutral-50',
     },
     text: {
-      primary: isDarkMode ? 'text-[#E0E0E0]' : 'text-black-300',
-      secondary: isDarkMode ? 'text-[#A0A0A0]' : 'text-black-100',
-      accent: isDarkMode ? 'text-neutral-200' : 'text-neutral-700',
+      primary: isDarkMode ? 'text-white' : 'text-black-300',
+      secondary: isDarkMode ? 'text-[#B0B0B0]' : 'text-black-100',
+      accent: isDarkMode ? 'text-[#38BDF8]' : 'text-primary-300',
+    },
+    status: {
+      pending: isDarkMode
+        ? 'bg-amber-900/30 text-amber-400'
+        : 'bg-amber-100 text-amber-800',
+      confirmed: isDarkMode
+        ? 'bg-blue-900/30 text-blue-400'
+        : 'bg-blue-100 text-blue-800',
+      completed: isDarkMode
+        ? 'bg-emerald-900/30 text-emerald-400'
+        : 'bg-emerald-100 text-emerald-800',
+      cancelled: isDarkMode
+        ? 'bg-rose-900/30 text-rose-400'
+        : 'bg-rose-100 text-rose-800',
     },
   };
 

@@ -15,19 +15,37 @@ interface ThemeColors {
   text: {
     primary: ThemeColorFunction;
     secondary: ThemeColorFunction;
+    muted: ThemeColorFunction;
   };
   border: {
     primary: ThemeColorFunction;
+  };
+  card: {
+    background: ThemeColorFunction;
+    border: ThemeColorFunction;
+    hover: ThemeColorFunction;
   };
   accent: {
     primary: string;
     secondary: string;
   };
   status: {
-    success: string;
-    error: string;
-    warning: string;
-    info: string;
+    pending: {
+      background: ThemeColorFunction;
+      text: ThemeColorFunction;
+    };
+    confirmed: {
+      background: ThemeColorFunction;
+      text: ThemeColorFunction;
+    };
+    completed: {
+      background: ThemeColorFunction;
+      text: ThemeColorFunction;
+    };
+    cancelled: {
+      background: ThemeColorFunction;
+      text: ThemeColorFunction;
+    };
   };
   tabBar: {
     background: ThemeColorFunction;
@@ -48,34 +66,52 @@ export const themeConfig = {
   colors: {
     background: {
       primary: (isDark: boolean) => (isDark ? '#121212' : '#FAFAFA'),
-      secondary: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      secondary: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
       card: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
       gradient: (isDark: boolean) =>
-        isDark ? ['#1A1A1A', '#2A2A2A'] : ['#0061FF', '#60EFFF'],
+        isDark ? ['#1E1E1E', '#2A2A2A'] : ['#0061FF', '#60EFFF'],
     },
     text: {
-      primary: (isDark: boolean) => (isDark ? '#E0E0E0' : '#191D31'),
-      secondary: (isDark: boolean) => (isDark ? '#A0A0A0' : '#666876'),
+      primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#191D31'),
+      secondary: (isDark: boolean) => (isDark ? '#E0E0E0' : '#666876'),
+      muted: (isDark: boolean) => (isDark ? '#A0A0A0' : '#999999'),
     },
     border: {
       primary: (isDark: boolean) => (isDark ? '#2A2A2A' : '#E5E5E5'),
+    },
+    card: {
+      background: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
+      border: (isDark: boolean) => (isDark ? '#2A2A2A' : '#E5E5E5'),
+      hover: (isDark: boolean) => (isDark ? '#252525' : '#F5F5F5'),
     },
     accent: {
       primary: '#0061FF',
       secondary: '#60EFFF',
     },
     status: {
-      success: '#4CAF50',
-      error: '#F44336',
-      warning: '#FF9800',
-      info: '#2196F3',
+      pending: {
+        background: (isDark: boolean) => (isDark ? '#2A2005' : '#FFFBEB'),
+        text: (isDark: boolean) => (isDark ? '#FACC15' : '#CA8A04'),
+      },
+      confirmed: {
+        background: (isDark: boolean) => (isDark ? '#082F49' : '#F0F9FF'),
+        text: (isDark: boolean) => (isDark ? '#38BDF8' : '#0284C7'),
+      },
+      completed: {
+        background: (isDark: boolean) => (isDark ? '#0D2616' : '#F0FDF4'),
+        text: (isDark: boolean) => (isDark ? '#4ADE80' : '#16A34A'),
+      },
+      cancelled: {
+        background: (isDark: boolean) => (isDark ? '#2A1215' : '#FEF2F2'),
+        text: (isDark: boolean) => (isDark ? '#F87171' : '#DC2626'),
+      },
     },
     tabBar: {
-      background: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      background: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
       active: '#0061FF',
       inactive: (isDark: boolean) => (isDark ? '#A0A0A0' : '#666876'),
     },
-  } as ThemeColors,
+  },
   spacing: {
     xs: 4,
     sm: 8,

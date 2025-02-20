@@ -6,22 +6,14 @@ import { useTheme } from '@/lib/theme-provider';
 
 export default function TabLayout() {
   const { user } = useGlobalContext();
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, theme } = useTheme();
   const isAdmin = user?.role === 'admin';
-
-  const theme = {
-    tabBar: {
-      background: isDarkMode ? '#1A1A1A' : 'white',
-      activeTint: '#0061FF',
-      inactiveTint: isDarkMode ? '#A0A0A0' : '#666876',
-    },
-  };
 
   return (
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: theme.tabBar.background,
+          backgroundColor: theme.colors.tabBar.background(isDarkMode),
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
@@ -30,11 +22,12 @@ export default function TabLayout() {
         },
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: theme.tabBar.activeTint,
-        tabBarInactiveTintColor: theme.tabBar.inactiveTint,
+        tabBarActiveTintColor: theme.colors.tabBar.active,
+        tabBarInactiveTintColor: theme.colors.tabBar.inactive(isDarkMode),
         tabBarLabelStyle: {
           fontFamily: 'Rubik-Medium',
           fontSize: 12,
+          color: theme.colors.text.primary(isDarkMode),
         },
       }}
     >

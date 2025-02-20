@@ -1,65 +1,66 @@
-import { useState, useEffect } from "react";
-import { View, Text, ScrollView, Pressable, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Calendar, LocaleConfig } from "react-native-calendars";
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import Animated, {
   FadeInDown,
   SlideInRight,
   FadeIn,
-} from "react-native-reanimated";
-import { BlurView } from "expo-blur";
-import { useRouter } from "expo-router";
-import { useGlobalContext } from "@/lib/global-provider";
-import { appointmentService } from "@/lib/services/appointment";
-import icons from "@/constants/icons";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { AppointmentStatus } from "@/lib/services/appointment";
-import { Query } from "react-native-appwrite";
+} from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
+import { useGlobalContext } from '@/lib/global-provider';
+import { appointmentService } from '@/lib/services/appointment';
+import icons from '@/constants/icons';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import { AppointmentStatus } from '@/lib/services/appointment';
+import { Query } from 'react-native-appwrite';
+import { useTheme } from '@/lib/theme-provider';
 
 // Türkçe lokalizasyon ayarları
-LocaleConfig.locales["tr"] = {
+LocaleConfig.locales['tr'] = {
   monthNames: [
-    "Ocak",
-    "Şubat",
-    "Mart",
-    "Nisan",
-    "Mayıs",
-    "Haziran",
-    "Temmuz",
-    "Ağustos",
-    "Eylül",
-    "Ekim",
-    "Kasım",
-    "Aralık",
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
   ],
   monthNamesShort: [
-    "Oca",
-    "Şub",
-    "Mar",
-    "Nis",
-    "May",
-    "Haz",
-    "Tem",
-    "Ağu",
-    "Eyl",
-    "Eki",
-    "Kas",
-    "Ara",
+    'Oca',
+    'Şub',
+    'Mar',
+    'Nis',
+    'May',
+    'Haz',
+    'Tem',
+    'Ağu',
+    'Eyl',
+    'Eki',
+    'Kas',
+    'Ara',
   ],
   dayNames: [
-    "Pazar",
-    "Pazartesi",
-    "Salı",
-    "Çarşamba",
-    "Perşembe",
-    "Cuma",
-    "Cumartesi",
+    'Pazar',
+    'Pazartesi',
+    'Salı',
+    'Çarşamba',
+    'Perşembe',
+    'Cuma',
+    'Cumartesi',
   ],
-  dayNamesShort: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+  dayNamesShort: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
 };
 
-LocaleConfig.defaultLocale = "tr";
+LocaleConfig.defaultLocale = 'tr';
 
 interface Appointment {
   $id: string;
@@ -76,6 +77,7 @@ interface Appointment {
 export default function Appointments() {
   const router = useRouter();
   const { user } = useGlobalContext();
+  const { isDarkMode, theme } = useTheme();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,10 +89,10 @@ export default function Appointments() {
   const fetchAppointments = async () => {
     try {
       const response = await appointmentService.list([
-        ...(user?.role === "admin"
+        ...(user?.role === 'admin'
           ? [] // Admin için filtre yok
-          : [Query.equal("clientId", user?.$id!)]), // Client için sadece kendi randevuları
-        Query.orderDesc("dateTime"),
+          : [Query.equal('clientId', user?.$id!)]), // Client için sadece kendi randevuları
+        Query.orderDesc('dateTime'),
       ]);
 
       setAppointments(
@@ -103,7 +105,7 @@ export default function Appointments() {
         }))
       );
     } catch (error) {
-      console.error("Randevuları getirme hatası:", error);
+      console.error('Randevuları getirme hatası:', error);
     } finally {
       setLoading(false);
     }
@@ -118,48 +120,56 @@ export default function Appointments() {
       // Listeyi güncelle
       fetchAppointments();
     } catch (error) {
-      console.error("Randevu durumu güncellenirken hata:", error);
+      console.error('Randevu durumu güncellenirken hata:', error);
     }
   };
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-accent-100">
+      <SafeAreaView
+        className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+      >
         <View className="flex-1 items-center justify-center">
-          <Text className="text-black-300 font-rubik">Yükleniyor...</Text>
+          <Text
+            className={`text-[${theme.colors.text.primary(isDarkMode)}] font-rubik`}
+          >
+            Yükleniyor...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-accent-100">
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
       <ScrollView className="flex-1">
         {/* Header */}
         <View className="px-4 pt-4 flex-row items-center justify-between">
           <View>
             <Animated.Text
               entering={FadeInDown.delay(100)}
-              className="text-2xl font-rubik-semibold text-black-300"
+              className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}]`}
             >
               Randevular
             </Animated.Text>
             <Animated.Text
               entering={FadeInDown.delay(200)}
-              className="text-black-100 font-rubik mt-1"
+              className={`text-[${theme.colors.text.secondary(isDarkMode)}] font-rubik mt-1`}
             >
               Randevularınızı yönetin
             </Animated.Text>
           </View>
 
           <Pressable
-            onPress={() => router.push("/(root)/(tabs)/create-appointment")}
-            className="bg-primary-300 p-2 rounded-full"
+            onPress={() => router.push('/(root)/(tabs)/create-appointment')}
+            className={`p-2 rounded-full bg-[${theme.colors.accent.primary}]`}
           >
             <Image
               source={icons.plus}
               className="w-6 h-6"
-              style={{ tintColor: "#ffffff" }}
+              style={{ tintColor: '#ffffff' }}
             />
           </Pressable>
         </View>
@@ -168,31 +178,33 @@ export default function Appointments() {
         <View className="mt-8 px-4 pb-8">
           <Animated.Text
             entering={FadeInDown.delay(300)}
-            className="text-lg font-rubik-medium text-black-300 mb-4"
+            className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
           >
-            {user?.role === "admin" ? "Tüm Randevular" : "Randevularım"}
+            {user?.role === 'admin' ? 'Tüm Randevular' : 'Randevularım'}
           </Animated.Text>
 
           {appointments.length === 0 ? (
-            <Text className="text-black-100 font-rubik text-center mt-4">
+            <Text
+              className={`text-[${theme.colors.text.secondary(isDarkMode)}] font-rubik text-center mt-4`}
+            >
               Henüz randevu bulunmamaktadır.
             </Text>
           ) : (
             appointments.map((appointment) => {
               const appointmentDate = format(
                 new Date(appointment.dateTime),
-                "yyyy-MM-dd"
+                'yyyy-MM-dd'
               );
               const appointmentTime = format(
                 new Date(appointment.dateTime),
-                "HH:mm"
+                'HH:mm'
               );
 
               return (
                 <Animated.View
                   key={appointment.$id}
                   entering={FadeInDown.delay(400)}
-                  className="bg-white p-4 rounded-2xl mb-3"
+                  className={`p-4 rounded-2xl mb-3 bg-[${theme.colors.card.background(isDarkMode)}]`}
                 >
                   <Pressable
                     onPress={() =>
@@ -208,30 +220,36 @@ export default function Appointments() {
                   >
                     <View className="flex-row items-center justify-between">
                       <View>
-                        <Text className="text-black-300 font-rubik-medium">
+                        <Text
+                          className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+                        >
                           {format(
                             new Date(appointment.dateTime),
-                            "d MMMM yyyy - HH:mm",
+                            'd MMMM yyyy - HH:mm',
                             {
                               locale: tr,
                             }
                           )}
                         </Text>
-                        <Text className="text-black-100 text-sm font-rubik mt-1">
+                        <Text
+                          className={`text-sm font-rubik mt-1 text-[${theme.colors.text.secondary(isDarkMode)}]`}
+                        >
                           {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
                         </Text>
-                        {user?.role === "admin" && (
-                          <Text className="text-primary-300 text-sm font-rubik mt-1">
+                        {user?.role === 'admin' && (
+                          <Text
+                            className={`text-sm font-rubik mt-1 text-[${theme.colors.accent.primary}]`}
+                          >
                             Müşteri ID: {appointment.clientId}
                           </Text>
                         )}
                       </View>
                       <View
-                        className={`px-3 py-1 rounded-full ${getStatusColor(
-                          appointment.status
-                        )}`}
+                        className={`px-3 py-1 rounded-full bg-[${theme.colors.status[appointment.status].background(isDarkMode)}]`}
                       >
-                        <Text className="text-sm font-rubik-medium">
+                        <Text
+                          className={`text-sm font-rubik-medium text-[${theme.colors.status[appointment.status].text(isDarkMode)}]`}
+                        >
                           {getStatusText(appointment.status)}
                         </Text>
                       </View>
@@ -239,14 +257,14 @@ export default function Appointments() {
                   </Pressable>
 
                   {/* Admin için onay/red butonları */}
-                  {user?.role === "admin" &&
-                    appointment.status === "pending" && (
+                  {user?.role === 'admin' &&
+                    appointment.status === 'pending' && (
                       <View className="flex-row gap-2 mt-3">
                         <Pressable
                           onPress={() =>
-                            handleStatusChange(appointment.$id, "confirmed")
+                            handleStatusChange(appointment.$id, 'confirmed')
                           }
-                          className="flex-1 bg-primary-300 py-2 rounded-xl"
+                          className={`flex-1 py-2 rounded-xl bg-[${theme.colors.accent.primary}]`}
                         >
                           <Text className="text-white font-rubik-medium text-center text-sm">
                             Onayla
@@ -254,11 +272,13 @@ export default function Appointments() {
                         </Pressable>
                         <Pressable
                           onPress={() =>
-                            handleStatusChange(appointment.$id, "cancelled")
+                            handleStatusChange(appointment.$id, 'cancelled')
                           }
-                          className="flex-1 bg-red-500 py-2 rounded-xl"
+                          className={`flex-1 py-2 rounded-xl bg-[${theme.colors.status.cancelled.background(isDarkMode)}]`}
                         >
-                          <Text className="text-white font-rubik-medium text-center text-sm">
+                          <Text
+                            className={`text-[${theme.colors.status.cancelled.text(isDarkMode)}] text-center font-rubik-medium text-sm`}
+                          >
                             Reddet
                           </Text>
                         </Pressable>
@@ -276,29 +296,29 @@ export default function Appointments() {
 
 const getStatusColor = (status: AppointmentStatus) => {
   switch (status) {
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    case "confirmed":
-      return "bg-blue-100 text-blue-800";
-    case "completed":
-      return "bg-green-100 text-green-800";
-    case "cancelled":
-      return "bg-red-100 text-red-800";
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800';
+    case 'completed':
+      return 'bg-green-100 text-green-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
     default:
-      return "bg-gray-100 text-gray-800";
+      return 'bg-gray-100 text-gray-800';
   }
 };
 
 const getStatusText = (status: AppointmentStatus) => {
   switch (status) {
-    case "pending":
-      return "Beklemede";
-    case "confirmed":
-      return "Onaylandı";
-    case "completed":
-      return "Tamamlandı";
-    case "cancelled":
-      return "İptal Edildi";
+    case 'pending':
+      return 'Beklemede';
+    case 'confirmed':
+      return 'Onaylandı';
+    case 'completed':
+      return 'Tamamlandı';
+    case 'cancelled':
+      return 'İptal Edildi';
     default:
       return status;
   }

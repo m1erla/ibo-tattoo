@@ -6,22 +6,10 @@ import { LineChart, PieChart } from 'react-native-chart-kit';
 import { useTheme } from '@/lib/theme-provider';
 
 export default function Dashboard() {
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, theme } = useTheme();
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [demographics, setDemographics] = useState({});
   const [loading, setLoading] = useState(true);
-
-  const theme = {
-    background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
-    card: {
-      background: isDarkMode ? 'bg-[#1E1E1E]' : 'bg-white',
-      border: isDarkMode ? 'border-[#2A2A2A]' : 'border-gray-100',
-    },
-    text: {
-      primary: isDarkMode ? 'text-[#E0E0E0]' : 'text-black-300',
-      secondary: isDarkMode ? 'text-[#A0A0A0]' : 'text-black-100',
-    },
-  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -44,10 +32,16 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <SafeAreaView className={`flex-1 ${theme.background}`}>
+      <SafeAreaView
+        className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+      >
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={isDarkMode ? '#E0E0E0' : '#191D31'} />
-          <Text className={`${theme.text.primary} mt-4`}>Yükleniyor...</Text>
+          <Text
+            className={`text-2xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mt-4`}
+          >
+            Yükleniyor...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -64,20 +58,28 @@ export default function Dashboard() {
   }));
 
   return (
-    <SafeAreaView className={`flex-1 ${theme.background}`}>
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
       <ScrollView className="flex-1 p-4">
-        <Text className={`${theme.text.primary} text-2xl font-rubik-bold`}>
+        <Text
+          className={`text-2xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}]`}
+        >
           Admin Dashboard
         </Text>
 
         {/* Gelir Özeti */}
         <View
-          className={`${theme.card.background} p-4 rounded-2xl mb-4 ${theme.card.border}`}
+          className={`p-4 rounded-2xl mb-4 bg-[${theme.colors.card.background(isDarkMode)}] border-[1px] border-[${theme.colors.border.primary(isDarkMode)}]`}
         >
-          <Text className={`${theme.text.secondary} text-lg font-rubik-medium`}>
+          <Text
+            className={`text-lg font-rubik-medium text-[${theme.colors.text.secondary(isDarkMode)}]`}
+          >
             Aylık Gelir
           </Text>
-          <Text className="text-2xl font-rubik-bold text-primary-300 mt-2">
+          <Text
+            className={`text-2xl font-rubik-bold text-[${theme.colors.accent.primary}] mt-2`}
+          >
             {monthlyRevenue.toLocaleString('tr-TR')} ₺
           </Text>
         </View>

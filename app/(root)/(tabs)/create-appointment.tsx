@@ -1,41 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   Pressable,
   ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Calendar } from "react-native-calendars";
-import { useRouter } from "expo-router";
-import Animated, { FadeInDown } from "react-native-reanimated";
-import { tr } from "date-fns/locale";
-import { format, addDays, setHours, setMinutes } from "date-fns";
-import { appointmentService } from "@/lib/services/appointment";
-import { ID } from "react-native-appwrite";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Calendar } from 'react-native-calendars';
+import { useRouter } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { tr } from 'date-fns/locale';
+import { format, addDays, setHours, setMinutes } from 'date-fns';
+import { appointmentService } from '@/lib/services/appointment';
+import { ID } from 'react-native-appwrite';
+import { useTheme } from '@/lib/theme-provider';
 
 const TIME_SLOTS = [
-  "10:00",
-  "11:00",
-  "12:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
+  '10:00',
+  '11:00',
+  '12:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
 ];
 
 export default function CreateAppointment() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const { isDarkMode, theme } = useTheme();
 
   // Bugünden itibaren 30 gün için randevu alınabilir
-  const maxDate = format(addDays(new Date(), 30), "yyyy-MM-dd");
-  const minDate = format(new Date(), "yyyy-MM-dd");
+  const maxDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+  const minDate = format(new Date(), 'yyyy-MM-dd');
 
   // Seçilen tarih değiştiğinde müsait saatleri getir
   useEffect(() => {
@@ -47,25 +49,30 @@ export default function CreateAppointment() {
   const fetchAvailableSlots = async () => {
     setLoadingSlots(true);
     try {
-      const slots = await appointmentService.getAvailableTimeSlots(
-        selectedDate
-      );
+      const slots =
+        await appointmentService.getAvailableTimeSlots(selectedDate);
       setAvailableSlots(slots);
     } catch (error) {
-      console.error("Müsait saatler getirilemedi:", error);
+      console.error('Müsait saatler getirilemedi:', error);
     } finally {
       setLoadingSlots(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-accent-100">
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-4">
-          <Text className="text-2xl font-rubik-semibold text-black-300">
+          <Text
+            className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}]`}
+          >
             Randevu Oluştur
           </Text>
-          <Text className="text-black-100 font-rubik mt-1">
+          <Text
+            className={`font-rubik mt-1 text-[${theme.colors.text.secondary(isDarkMode)}]`}
+          >
             Uygun tarih ve saati seçin
           </Text>
         </View>
@@ -80,15 +87,22 @@ export default function CreateAppointment() {
             maxDate={maxDate}
             onDayPress={(day: any) => setSelectedDate(day.dateString)}
             markedDates={{
-              [selectedDate]: { selected: true, selectedColor: "#0061FF" },
+              [selectedDate]: {
+                selected: true,
+                selectedColor: theme.colors.accent.primary,
+              },
             }}
             theme={{
-              todayTextColor: "#0061FF",
-              selectedDayBackgroundColor: "#0061FF",
-              selectedDayTextColor: "#ffffff",
-              textDayFontFamily: "Rubik-Regular",
-              textMonthFontFamily: "Rubik-Medium",
-              textDayHeaderFontFamily: "Rubik-Medium",
+              todayTextColor: theme.colors.accent.primary,
+              selectedDayBackgroundColor: theme.colors.accent.primary,
+              selectedDayTextColor: '#ffffff',
+              textDayFontFamily: 'Rubik-Regular',
+              textMonthFontFamily: 'Rubik-Medium',
+              textDayHeaderFontFamily: 'Rubik-Medium',
+              calendarBackground: theme.colors.card.background(isDarkMode),
+              textColor: theme.colors.text.primary(isDarkMode),
+              monthTextColor: theme.colors.text.primary(isDarkMode),
+              dayTextColor: theme.colors.text.primary(isDarkMode),
             }}
           />
         </Animated.View>
@@ -99,11 +113,13 @@ export default function CreateAppointment() {
             entering={FadeInDown.delay(300).springify()}
             className="mt-6 px-4"
           >
-            <Text className="text-lg font-rubik-medium text-black-300 mb-4">
+            <Text
+              className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+            >
               Uygun Saati Seçin
             </Text>
             {loadingSlots ? (
-              <ActivityIndicator color="#0061FF" />
+              <ActivityIndicator color={theme.colors.accent.primary} />
             ) : availableSlots.length > 0 ? (
               <View className="flex-row flex-wrap gap-3">
                 {availableSlots.map((time) => (
@@ -111,12 +127,16 @@ export default function CreateAppointment() {
                     key={time}
                     onPress={() => setSelectedTime(time)}
                     className={`px-4 py-2 rounded-full ${
-                      selectedTime === time ? "bg-primary-300" : "bg-white"
+                      selectedTime === time
+                        ? `bg-[${theme.colors.accent.primary}]`
+                        : `bg-[${theme.colors.card.background(isDarkMode)}]`
                     }`}
                   >
                     <Text
                       className={`font-rubik-medium ${
-                        selectedTime === time ? "text-white" : "text-black-300"
+                        selectedTime === time
+                          ? 'text-white'
+                          : `text-[${theme.colors.text.primary(isDarkMode)}]`
                       }`}
                     >
                       {time}
@@ -125,8 +145,12 @@ export default function CreateAppointment() {
                 ))}
               </View>
             ) : (
-              <View className="bg-red-50 p-4 rounded-2xl">
-                <Text className="text-red-600 font-rubik text-center">
+              <View
+                className={`p-4 rounded-2xl bg-[${theme.colors.status.cancelled.background(isDarkMode)}]`}
+              >
+                <Text
+                  className={`font-rubik text-center text-[${theme.colors.status.cancelled.text(isDarkMode)}]`}
+                >
                   Bu tarih için müsait randevu saati bulunmamaktadır.
                 </Text>
               </View>
@@ -147,11 +171,11 @@ export default function CreateAppointment() {
                   params: {
                     date: selectedDate,
                     time: selectedTime,
-                    isNew: "true",
+                    isNew: 'true',
                   },
                 })
               }
-              className="bg-primary-300 py-4 rounded-2xl"
+              className={`py-4 rounded-2xl bg-[${theme.colors.accent.primary}]`}
             >
               <Text className="text-white font-rubik-medium text-center">
                 Devam Et

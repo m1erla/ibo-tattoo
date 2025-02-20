@@ -1,6 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
 import { useGlobalContext } from '@/lib/global-provider';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 import { useTheme } from '@/lib/theme-provider';
 
 export default function AdminLayout() {
@@ -9,8 +9,12 @@ export default function AdminLayout() {
 
   const theme = {
     background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
+    text: {
+      primary: isDarkMode ? 'text-[#FFFFFF]' : 'text-black-300',
+      secondary: isDarkMode ? 'text-[#E0E0E0]' : 'text-black-100',
+    },
     loading: {
-      color: isDarkMode ? '#E0E0E0' : '#191D31',
+      color: isDarkMode ? '#FFFFFF' : '#191D31',
     },
   };
 
@@ -46,6 +50,9 @@ export default function AdminLayout() {
           animation: 'fade',
         }}
       />
+      <Text className={`${theme.text.primary} text-lg font-rubik-medium`}>
+        Admin Panel
+      </Text>
     </Stack>
   );
 }

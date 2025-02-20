@@ -11,15 +11,7 @@ import { useTheme } from '@/lib/theme-provider';
 export default function AppLayout() {
   const { loading, isLogged } = useGlobalContext();
   const router = useRouter();
-  const { isDarkMode } = useTheme();
-
-  const theme = {
-    background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
-    text: isDarkMode ? 'text-white' : 'text-black-300',
-    loading: {
-      gradient: isDarkMode ? ['#1A1A1A', '#2A2A2A'] : ['#0061FF', '#60EFFF'],
-    },
-  };
+  const { isDarkMode, theme } = useTheme();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -37,17 +29,22 @@ export default function AppLayout() {
     return (
       <View className="flex-1">
         <LinearGradient
-          colors={theme.loading.gradient}
+          colors={[
+            theme.colors.background.gradient(isDarkMode)[0],
+            theme.colors.background.gradient(isDarkMode)[1],
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           className="absolute w-full h-full"
         />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator
-            color={isDarkMode ? '#E0E0E0' : '#fff'}
+            color={theme.colors.text.primary(isDarkMode)}
             size="large"
           />
-          <Text className={`${theme.text} font-rubik-medium mt-4`}>
+          <Text
+            className={`text-[${theme.colors.text.primary(isDarkMode)}] font-rubik-medium mt-4`}
+          >
             Yükleniyor...
           </Text>
         </View>
@@ -66,7 +63,7 @@ export default function AppLayout() {
         animation: 'slide_from_right',
         animationDuration: 200,
         contentStyle: {
-          backgroundColor: isDarkMode ? '#121212' : '#FAFAFA',
+          backgroundColor: theme.colors.background.primary(isDarkMode),
         },
       }}
     >

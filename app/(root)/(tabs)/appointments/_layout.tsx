@@ -2,14 +2,14 @@ import { Stack } from 'expo-router';
 import { useTheme } from '@/lib/theme-provider';
 
 export default function AppointmentsLayout() {
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, theme } = useTheme();
 
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         contentStyle: {
-          backgroundColor: isDarkMode ? '#121212' : '#FAFAFA',
+          backgroundColor: theme.colors.background.primary(isDarkMode),
         },
       }}
     >
