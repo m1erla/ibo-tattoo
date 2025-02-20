@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   Text,
   View,
@@ -6,36 +6,36 @@ import {
   Image,
   Dimensions,
   Pressable,
-} from "react-native";
+} from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInRight,
   SlideInRight,
-} from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
-import { useRouter } from "expo-router";
+} from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
 
-import { useGlobalContext } from "@/lib/global-provider";
-import { databases, appwriteConfig } from "@/lib/appwrite";
-import { Query } from "react-native-appwrite";
-import images from "@/constants/images";
-import { useTheme } from "@/lib/theme-provider";
+import { useGlobalContext } from '@/lib/global-provider';
+import { databases, appwriteConfig } from '@/lib/appwrite';
+import { Query } from 'react-native-appwrite';
+import images from '@/constants/images';
+import { useTheme } from '@/lib/theme-provider';
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 
 interface User extends Record<string, any> {
   $id: string;
   name: string;
   email: string;
   avatar: string;
-  role: "admin" | "client";
+  role: 'admin' | 'client';
 }
 
 type Appointment = {
   _id: string;
   dateTime: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   designDetails: {
     size: string;
     style: string;
@@ -57,6 +57,7 @@ export default function Index() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentWorks, setRecentWorks] = useState<PortfolioItem[]>([]);
   const { isDarkMode } = useTheme();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,11 +69,11 @@ export default function Index() {
           appwriteConfig.databaseId!,
           appwriteConfig.appointmentsCollectionId!,
           [
-            ...(user.role === "admin"
-              ? [Query.orderDesc("dateTime")]
+            ...(user.role === 'admin'
+              ? [Query.orderDesc('dateTime')]
               : [
-                  Query.equal("clientId", user.$id),
-                  Query.orderDesc("dateTime"),
+                  Query.equal('clientId', user.$id),
+                  Query.orderDesc('dateTime'),
                 ]),
             Query.limit(5),
           ]
@@ -91,7 +92,7 @@ export default function Index() {
         const portfolioData = await databases.listDocuments(
           appwriteConfig.databaseId!,
           appwriteConfig.portfolioCollectionId!,
-          [Query.orderDesc("createdAt"), Query.limit(3)]
+          [Query.orderDesc('createdAt'), Query.limit(3)]
         );
         setRecentWorks(
           portfolioData.documents.map((doc) => ({
@@ -104,10 +105,10 @@ export default function Index() {
       } catch (error: any) {
         if (error.code === 404) {
           console.log(
-            "Koleksiyon bulunamadı, lütfen Appwrite konsolunda koleksiyonları oluşturun"
+            'Koleksiyon bulunamadı, lütfen Appwrite konsolunda koleksiyonları oluşturun'
           );
         } else {
-          console.error("Veri çekme hatası:", error);
+          console.error('Veri çekme hatası:', error);
         }
       }
     };
@@ -117,55 +118,55 @@ export default function Index() {
 
   // Tema bazlı renkler güncellendi
   const theme = {
-    background: isDarkMode ? "bg-[#121212]" : "bg-[#FAFAFA]",
+    background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
     card: {
-      background: isDarkMode ? "bg-[#1E1E1E]" : "bg-white",
-      border: isDarkMode ? "border-[#2A2A2A]" : "border-gray-100",
-      highlight: isDarkMode ? "bg-[#2A2A2A]" : "bg-neutral-50",
+      background: isDarkMode ? 'bg-[#1E1E1E]' : 'bg-white',
+      border: isDarkMode ? 'border-[#2A2A2A]' : 'border-gray-100',
+      highlight: isDarkMode ? 'bg-[#2A2A2A]' : 'bg-neutral-50',
     },
     text: {
-      primary: isDarkMode ? "text-[#E0E0E0]" : "text-black-300",
-      secondary: isDarkMode ? "text-[#A0A0A0]" : "text-black-100",
-      accent: isDarkMode ? "text-neutral-200" : "text-neutral-700",
+      primary: isDarkMode ? 'text-[#E0E0E0]' : 'text-black-300',
+      secondary: isDarkMode ? 'text-[#A0A0A0]' : 'text-black-100',
+      accent: isDarkMode ? 'text-neutral-200' : 'text-neutral-700',
     },
   };
 
   const getStatusColor = (
-    status: "pending" | "confirmed" | "completed" | "cancelled"
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   ) => {
     const colors = isDarkMode
       ? {
-          pending: "bg-amber-500/20 text-amber-400",
-          confirmed: "bg-neutral-500/20 text-neutral-300",
-          completed: "bg-emerald-500/20 text-emerald-400",
-          cancelled: "bg-rose-500/20 text-rose-400",
+          pending: 'bg-amber-500/20 text-amber-400',
+          confirmed: 'bg-neutral-500/20 text-neutral-300',
+          completed: 'bg-emerald-500/20 text-emerald-400',
+          cancelled: 'bg-rose-500/20 text-rose-400',
         }
       : ({
-          pending: "bg-amber-100 text-amber-800",
-          confirmed: "bg-neutral-100 text-neutral-800",
-          completed: "bg-emerald-100 text-emerald-800",
-          cancelled: "bg-rose-100 text-rose-800",
+          pending: 'bg-amber-100 text-amber-800',
+          confirmed: 'bg-neutral-100 text-neutral-800',
+          completed: 'bg-emerald-100 text-emerald-800',
+          cancelled: 'bg-rose-100 text-rose-800',
         } as const);
     return colors[status];
   };
 
   const handleAppointmentsPress = () => {
-    router.push("/(root)/(tabs)/appointments" as any);
+    router.push('/(root)/(tabs)/appointments' as any);
   };
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/sign-in");
+      router.push('/sign-in');
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     }
   };
 
   return (
     <SafeAreaView className={`flex-1 ${theme.background}`}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header - Yeniden Tasarlandı */}
+        {/* Header */}
         <Animated.View
           entering={FadeInDown.delay(100).springify()}
           className="px-6 pt-6"
@@ -173,11 +174,7 @@ export default function Index() {
           <View className="flex-row items-center justify-between">
             <View>
               <Text className={`${theme.text.secondary} text-base font-rubik`}>
-                {new Date().toLocaleDateString("tr-TR", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
+                {isAdmin ? 'Admin Paneli' : 'Hoş Geldiniz'}
               </Text>
               <Text
                 className={`${theme.text.primary} text-2xl font-rubik-bold mt-1`}
@@ -186,7 +183,7 @@ export default function Index() {
               </Text>
             </View>
             <Pressable
-              onPress={() => router.push("/(root)/(tabs)/profile")}
+              onPress={() => router.push('/(root)/(tabs)/profile')}
               className={`${theme.card.background} p-2 rounded-full shadow-sm`}
             >
               <Image
@@ -197,45 +194,51 @@ export default function Index() {
           </View>
         </Animated.View>
 
-        {/* İstatistik Kartları - Yeni */}
-        <View className="flex-row px-6 mt-8 space-x-4">
-          <Animated.View
-            entering={FadeInRight.delay(200).springify()}
-            className="flex-1"
-          >
-            <Pressable
-              onPress={handleAppointmentsPress}
-              className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
+        {/* Admin için hızlı erişim kartları */}
+        {isAdmin && (
+          <View className="flex-row px-6 mt-8 space-x-4">
+            <Animated.View
+              entering={FadeInRight.delay(200).springify()}
+              className="flex-1"
             >
-              <Text className={`${theme.text.accent} text-2xl font-rubik-bold`}>
-                {appointments.length}
-              </Text>
-              <Text
-                className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+              <Pressable
+                onPress={handleAppointmentsPress}
+                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
               >
-                Aktif Randevu
-              </Text>
-            </Pressable>
-          </Animated.View>
+                <Text
+                  className={`${theme.text.accent} text-2xl font-rubik-bold`}
+                >
+                  {appointments.length}
+                </Text>
+                <Text
+                  className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+                >
+                  Aktif Randevu
+                </Text>
+              </Pressable>
+            </Animated.View>
 
-          <Animated.View
-            entering={FadeInRight.delay(300).springify()}
-            className="flex-1"
-          >
-            <View
-              className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
+            <Animated.View
+              entering={FadeInRight.delay(300).springify()}
+              className="flex-1"
             >
-              <Text className={`${theme.text.accent} text-2xl font-rubik-bold`}>
-                {recentWorks.length}
-              </Text>
-              <Text
-                className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+              <View
+                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
               >
-                Yeni Çalışma
-              </Text>
-            </View>
-          </Animated.View>
-        </View>
+                <Text
+                  className={`${theme.text.accent} text-2xl font-rubik-bold`}
+                >
+                  {recentWorks.length}
+                </Text>
+                <Text
+                  className={`${theme.text.secondary} text-sm font-rubik mt-1`}
+                >
+                  Yeni Çalışma
+                </Text>
+              </View>
+            </Animated.View>
+          </View>
+        )}
 
         {/* Randevular - Yeniden Tasarlandı */}
         <View className="mt-8 px-6">
@@ -267,13 +270,13 @@ export default function Index() {
                     <View className="flex-row items-center space-x-2 mb-2">
                       <View
                         className={`w-2 h-2 rounded-full ${
-                          appointment.status === "confirmed"
-                            ? "bg-neutral-400"
-                            : appointment.status === "pending"
-                            ? "bg-amber-400"
-                            : appointment.status === "completed"
-                            ? "bg-emerald-400"
-                            : "bg-rose-400"
+                          appointment.status === 'confirmed'
+                            ? 'bg-neutral-400'
+                            : appointment.status === 'pending'
+                              ? 'bg-amber-400'
+                              : appointment.status === 'completed'
+                                ? 'bg-emerald-400'
+                                : 'bg-rose-400'
                         }`}
                       />
                       <Text
@@ -299,11 +302,11 @@ export default function Index() {
                 </View>
                 <View className={`mt-3 pt-3 border-t ${theme.card.border}`}>
                   <Text className={`${theme.text.secondary} text-sm`}>
-                    {new Date(appointment.dateTime).toLocaleString("tr-TR", {
-                      day: "numeric",
-                      month: "long",
-                      hour: "2-digit",
-                      minute: "2-digit",
+                    {new Date(appointment.dateTime).toLocaleString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </Text>
                 </View>
@@ -318,7 +321,7 @@ export default function Index() {
             <Text className={`${theme.text.primary} text-xl font-rubik-bold`}>
               Son Çalışmalar
             </Text>
-            <Pressable onPress={() => router.push("/(root)/(tabs)/portfolio")}>
+            <Pressable onPress={() => router.push('/(root)/(tabs)/portfolio')}>
               <Text className={`${theme.text.accent} font-rubik-medium`}>
                 Tümünü Gör
               </Text>
