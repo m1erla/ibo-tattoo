@@ -3,22 +3,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'react-native';
 
 type ThemeColorFunction = (isDark: boolean) => string;
-type ThemeGradientFunction = (isDark: boolean) => string[];
 
 interface ThemeColors {
   background: {
     primary: ThemeColorFunction;
     secondary: ThemeColorFunction;
-    card: ThemeColorFunction;
-    gradient: ThemeGradientFunction;
+    tertiary: ThemeColorFunction;
   };
   text: {
     primary: ThemeColorFunction;
     secondary: ThemeColorFunction;
-    muted: ThemeColorFunction;
+    tertiary: ThemeColorFunction;
+    inverse: ThemeColorFunction;
   };
   border: {
     primary: ThemeColorFunction;
+    secondary: ThemeColorFunction;
   };
   card: {
     background: ThemeColorFunction;
@@ -28,6 +28,7 @@ interface ThemeColors {
   accent: {
     primary: string;
     secondary: string;
+    tertiary: string;
   };
   status: {
     pending: {
@@ -47,37 +48,36 @@ interface ThemeColors {
       text: ThemeColorFunction;
     };
   };
-  tabBar: {
-    background: ThemeColorFunction;
-    active: string;
-    inactive: ThemeColorFunction;
+  gradient: {
+    primary: [string, string];
+    secondary: [string, string];
+    tertiary: [string, string];
+    dark: [string, string];
   };
 }
 
-// ThemeContextType tanımını ekleyelim (en üstte diğer type tanımlarının yanına)
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
   theme: typeof themeConfig;
 }
 
-// Merkezi tema yapılandırması
 export const themeConfig = {
   colors: {
     background: {
-      primary: (isDark: boolean) => (isDark ? '#121212' : '#FAFAFA'),
-      secondary: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
-      card: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
-      gradient: (isDark: boolean) =>
-        isDark ? ['#1E1E1E', '#2A2A2A'] : ['#0061FF', '#60EFFF'],
+      primary: (isDark: boolean) => (isDark ? '#121212' : '#F8F9FA'),
+      secondary: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      tertiary: (isDark: boolean) => (isDark ? '#222222' : '#F0F0F0'),
     },
     text: {
-      primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#191D31'),
-      secondary: (isDark: boolean) => (isDark ? '#E0E0E0' : '#666876'),
-      muted: (isDark: boolean) => (isDark ? '#A0A0A0' : '#999999'),
+      primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#1A1A1A'),
+      secondary: (isDark: boolean) => (isDark ? '#B0B0B0' : '#666666'),
+      tertiary: (isDark: boolean) => (isDark ? '#808080' : '#999999'),
+      inverse: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
     },
     border: {
       primary: (isDark: boolean) => (isDark ? '#2A2A2A' : '#E5E5E5'),
+      secondary: (isDark: boolean) => (isDark ? '#333333' : '#EEEEEE'),
     },
     card: {
       background: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
@@ -85,20 +85,21 @@ export const themeConfig = {
       hover: (isDark: boolean) => (isDark ? '#252525' : '#F5F5F5'),
     },
     accent: {
-      primary: '#0061FF',
-      secondary: '#60EFFF',
+      primary: '#FF3366', // Modern pembe
+      secondary: '#7209B7', // Derin mor
+      tertiary: '#4361EE', // Elektrik mavisi
     },
     status: {
       pending: {
-        background: (isDark: boolean) => (isDark ? '#2A2005' : '#FFFBEB'),
-        text: (isDark: boolean) => (isDark ? '#FACC15' : '#CA8A04'),
+        background: (isDark: boolean) => (isDark ? '#3A1D1D' : '#FFF1F1'),
+        text: (isDark: boolean) => (isDark ? '#FF9494' : '#DC2626'),
       },
       confirmed: {
-        background: (isDark: boolean) => (isDark ? '#082F49' : '#F0F9FF'),
-        text: (isDark: boolean) => (isDark ? '#38BDF8' : '#0284C7'),
+        background: (isDark: boolean) => (isDark ? '#1A2F35' : '#F0F9FF'),
+        text: (isDark: boolean) => (isDark ? '#7DD3FC' : '#0369A1'),
       },
       completed: {
-        background: (isDark: boolean) => (isDark ? '#0D2616' : '#F0FDF4'),
+        background: (isDark: boolean) => (isDark ? '#052E16' : '#F0FDF4'),
         text: (isDark: boolean) => (isDark ? '#4ADE80' : '#16A34A'),
       },
       cancelled: {
@@ -106,10 +107,11 @@ export const themeConfig = {
         text: (isDark: boolean) => (isDark ? '#F87171' : '#DC2626'),
       },
     },
-    tabBar: {
-      background: (isDark: boolean) => (isDark ? '#1E1E1E' : '#FFFFFF'),
-      active: '#0061FF',
-      inactive: (isDark: boolean) => (isDark ? '#A0A0A0' : '#666876'),
+    gradient: {
+      primary: ['#FF3366', '#7209B7'] as [string, string], // Pembe -> Mor
+      secondary: ['#4361EE', '#3A0CA3'] as [string, string], // Mavi -> Lacivert
+      tertiary: ['#7209B7', '#3A0CA3'] as [string, string], // Mor -> Lacivert
+      dark: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)'] as [string, string], // Şeffaf -> Siyah
     },
   },
   spacing: {
@@ -118,13 +120,67 @@ export const themeConfig = {
     md: 16,
     lg: 24,
     xl: 32,
+    xxl: 40,
   },
   borderRadius: {
-    sm: 4,
-    md: 8,
+    xs: 4,
+    sm: 8,
+    md: 12,
     lg: 16,
     xl: 24,
+    xxl: 32,
     full: 9999,
+  },
+  typography: {
+    size: {
+      xs: 12,
+      sm: 14,
+      md: 16,
+      lg: 18,
+      xl: 20,
+      xxl: 24,
+      display: 32,
+    },
+    lineHeight: {
+      tight: 1.2,
+      normal: 1.5,
+      relaxed: 1.75,
+    },
+  },
+  animation: {
+    duration: {
+      fast: 200,
+      normal: 300,
+      slow: 500,
+    },
+    easing: {
+      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
+      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+    },
+  },
+  shadows: {
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.18,
+      shadowRadius: 1.0,
+      elevation: 1,
+    },
+    md: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    lg: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+    },
   },
 };
 
@@ -141,7 +197,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Sistem teması değiştiğinde ve kullanıcı özel tema seçmemişse güncelle
     const updateTheme = async () => {
       const savedTheme = await AsyncStorage.getItem('theme');
       if (!savedTheme) {
@@ -172,41 +227,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Dinamik tema değerlerini oluştur
-  const theme = {
-    ...themeConfig,
-    current: {
-      isDark: isDarkMode,
-      colors: Object.entries(themeConfig.colors).reduce(
-        (acc: Record<string, any>, [key, value]: [string, any]) => {
-          if (typeof value === 'function') {
-            acc[key] = value(isDarkMode);
-          } else if (typeof value === 'object') {
-            acc[key] = Object.entries(value).reduce(
-              (
-                subAcc: Record<string, any>,
-                [subKey, subValue]: [string, any]
-              ) => {
-                subAcc[subKey] =
-                  typeof subValue === 'function'
-                    ? subValue(isDarkMode)
-                    : subValue;
-                return subAcc;
-              },
-              {}
-            );
-          } else {
-            acc[key] = value;
-          }
-          return acc;
-        },
-        {}
-      ),
-    },
-  };
-
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
+    <ThemeContext.Provider
+      value={{ isDarkMode, toggleTheme, theme: themeConfig }}
+    >
       {children}
     </ThemeContext.Provider>
   );

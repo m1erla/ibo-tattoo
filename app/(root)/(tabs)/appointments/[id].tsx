@@ -20,6 +20,7 @@ import { tr } from 'date-fns/locale';
 import { databases, appwriteConfig } from '@/lib/appwrite';
 import { Calendar } from 'react-native-calendars';
 import { useTheme } from '@/lib/theme-provider';
+import * as Notifications from 'expo-notifications';
 
 const TATTOO_SIZES = ['Küçük', 'Orta', 'Büyük', 'Çok Büyük'];
 const TATTOO_STYLES = ['Minimal', 'Realistik', 'Traditional', 'Tribal'];
@@ -163,6 +164,15 @@ export default function AppointmentDetails() {
     } catch (error) {
       Alert.alert('Hata', 'Randevu yeniden planlanamadı');
     }
+  };
+
+  // Notification izni ve kayıt
+  const registerForPushNotifications = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const token = await Notifications.getExpoPushTokenAsync();
+    // Token'ı backend'e kaydet
   };
 
   return (
@@ -316,7 +326,7 @@ export default function AppointmentDetails() {
               onChangeText={setNotes}
               className={`p-4 min-h-[100] text-[${theme.colors.text.primary(isDarkMode)}] font-rubik bg-[${theme.colors.card.background(isDarkMode)}]`}
               placeholder="Dövmeniz hakkında ekstra bilgiler..."
-              placeholderTextColor={theme.colors.text.muted(isDarkMode)}
+              placeholderTextColor={theme.colors.text.secondary(isDarkMode)}
             />
           </BlurView>
         </Animated.View>
@@ -384,7 +394,7 @@ export default function AppointmentDetails() {
               onChangeText={setCancelReason}
               placeholder="İptal sebebi"
               className={`p-4 rounded-xl bg-[${theme.colors.background.secondary(isDarkMode)}]`}
-              placeholderTextColor={theme.colors.text.muted(isDarkMode)}
+              placeholderTextColor={theme.colors.text.secondary(isDarkMode)}
             />
             <View className="flex-row space-x-4">
               <Pressable

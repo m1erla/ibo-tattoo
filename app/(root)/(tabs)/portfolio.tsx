@@ -17,6 +17,8 @@ import { Models } from 'react-native-appwrite';
 import { Image as RNEImage } from '@rneui/themed';
 import FastImage from 'react-native-fast-image';
 import { useTheme } from '@/lib/theme-provider';
+import { FlashList } from '@shopify/flash-list';
+import { useRouter } from 'expo-router';
 
 interface PortfolioItem extends Models.Document {
   imageUrl: string;
@@ -25,11 +27,19 @@ interface PortfolioItem extends Models.Document {
   tags: string[];
 }
 
+interface FilterOptions {
+  style?: string;
+  size?: string;
+  placement?: string;
+}
+
 export default function Portfolio() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const { isDarkMode, theme } = useTheme();
+  const router = useRouter();
+  const [filters, setFilters] = useState<FilterOptions>({});
 
   const categories = ['all', 'minimal', 'realistik', 'traditional', 'tribal'];
 
@@ -68,6 +78,24 @@ export default function Portfolio() {
     // Detay sayfasına yönlendirme yapılacak
     console.log('Portfolio item pressed:', item);
   };
+
+  const filteredWorks = portfolioItems.filter((item) => {
+    let matches = true;
+
+    if (filters.style && item.style !== filters.style) {
+      matches = false;
+    }
+
+    if (filters.size && item.size !== filters.size) {
+      matches = false;
+    }
+
+    if (filters.placement && item.placement !== filters.placement) {
+      matches = false;
+    }
+
+    return matches;
+  });
 
   return (
     <SafeAreaView
@@ -124,43 +152,55 @@ export default function Portfolio() {
               </Text>
             </View>
           ) : (
-            portfolioItems.map((item) => (
-              <Animated.View
-                key={item.$id}
-                entering={FadeInDown.delay(200).springify()}
-                className="w-[48%] mb-4"
-              >
-                <Pressable
-                  onPress={() => handlePortfolioItemPress(item)}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm"
+            <FlashList
+              data={filteredWorks}
+              renderItem={({ item }) => (
+                <Animated.View
+                  key={item.$id}
+                  entering={FadeInDown.delay(200).springify()}
+                  className="w-[48%] mb-4"
                 >
-                  <FastImage
-                    source={{ uri: item.imageUrl }}
-                    style={{ width: '100%', height: 192 }}
-                    resizeMode={FastImage.resizeMode.cover}
-                    defaultSource={require('@/assets/images/placeholder.png')}
-                  />
-                  <View className="p-3">
-                    <Text className="font-rubik-medium text-black-300">
-                      {item.style}
-                    </Text>
-                    <Text className="text-black-100 text-sm mt-1">
-                      {item.description}
-                    </Text>
-                    <View className="flex-row flex-wrap mt-2">
-                      {item.tags.map((tag, index) => (
-                        <View
-                          key={index}
-                          className="bg-accent-100 px-2 py-1 rounded-full mr-1 mb-1"
-                        >
-                          <Text className="text-xs text-black-300">{tag}</Text>
-                        </View>
-                      ))}
+                  <Pressable
+                    onPress={() => router.push(`/portfolio/${item.$id}`)}
+                    className="bg-white rounded-xl overflow-hidden shadow-sm"
+                  >
+                    <FastImage
+                      source={{ uri: item.imageUrl }}
+                      style={{ width: '100%', height: 192 }}
+                      resizeMode={FastImage.resizeMode.cover}
+                      defaultSource={require('@/assets/images/placeholder.png')}
+                    />
+                    <View className="p-3">
+                      <Text
+                        className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+                      >
+                        {item.style}
+                      </Text>
+                      <Text
+                        className={`text-[${theme.colors.text.secondary(isDarkMode)}] text-sm mt-1`}
+                      >
+                        {item.description}
+                      </Text>
+                      <View className="flex-row flex-wrap mt-2">
+                        {item.tags.map((tag, index) => (
+                          <View
+                            key={index}
+                            className={`px-2 py-1 rounded-full mr-1 mb-1 bg-[${theme.colors.background.secondary(isDarkMode)}]`}
+                          >
+                            <Text
+                              className={`text-xs text-[${theme.colors.text.primary(isDarkMode)}]`}
+                            >
+                              {tag}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            ))
+                  </Pressable>
+                </Animated.View>
+              )}
+              estimatedItemSize={200}
+            />
           )}
         </View>
       </ScrollView>

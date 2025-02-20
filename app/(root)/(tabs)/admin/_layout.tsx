@@ -5,25 +5,14 @@ import { useTheme } from '@/lib/theme-provider';
 
 export default function AdminLayout() {
   const { user, loading } = useGlobalContext();
-  const { isDarkMode } = useTheme();
-
-  const theme = {
-    background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
-    text: {
-      primary: isDarkMode ? 'text-[#FFFFFF]' : 'text-black-300',
-      secondary: isDarkMode ? 'text-[#E0E0E0]' : 'text-black-100',
-    },
-    loading: {
-      color: isDarkMode ? '#FFFFFF' : '#191D31',
-    },
-  };
+  const { isDarkMode, theme } = useTheme();
 
   if (loading) {
     return (
       <View
-        className={`flex-1 items-center justify-center ${theme.background}`}
+        className={`flex-1 items-center justify-center bg-[${theme.colors.background.primary(isDarkMode)}]`}
       >
-        <ActivityIndicator color={theme.loading.color} />
+        <ActivityIndicator color={theme.colors.text.primary(isDarkMode)} />
       </View>
     );
   }
@@ -39,7 +28,7 @@ export default function AdminLayout() {
         headerShown: false,
         animation: 'slide_from_right',
         contentStyle: {
-          backgroundColor: isDarkMode ? '#121212' : '#FAFAFA',
+          backgroundColor: theme.colors.background.primary(isDarkMode),
         },
       }}
     >
@@ -50,9 +39,6 @@ export default function AdminLayout() {
           animation: 'fade',
         }}
       />
-      <Text className={`${theme.text.primary} text-lg font-rubik-medium`}>
-        Admin Panel
-      </Text>
     </Stack>
   );
 }

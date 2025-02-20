@@ -30,8 +30,8 @@ export default function AppLayout() {
       <View className="flex-1">
         <LinearGradient
           colors={[
-            theme.colors.background.gradient(isDarkMode)[0],
-            theme.colors.background.gradient(isDarkMode)[1],
+            theme.colors.background.primary(isDarkMode),
+            theme.colors.background.secondary(isDarkMode),
           ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}

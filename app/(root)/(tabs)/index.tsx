@@ -11,16 +11,20 @@ import Animated, {
   FadeInDown,
   FadeInRight,
   SlideInRight,
+  FadeIn,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { format } from 'date-fns';
 
 import { useGlobalContext } from '@/lib/global-provider';
 import { databases, appwriteConfig } from '@/lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import images from '@/constants/images';
 import { useTheme } from '@/lib/theme-provider';
+import icons from '@/constants/icons';
 
 const { width } = Dimensions.get('window');
 
@@ -118,15 +122,19 @@ export default function Index() {
 
   // Tema bazlı renkler güncellendi
   const theme = {
-    background: isDarkMode ? 'bg-[#121212]' : 'bg-[#FAFAFA]',
+    background: {
+      primary: (isDark: boolean) => (isDark ? '#121212' : '#FAFAFA'),
+    },
     card: {
       background: isDarkMode ? 'bg-[#1E1E1E]' : 'bg-white',
       border: isDarkMode ? 'border-[#2A2A2A]' : 'border-gray-100',
     },
     text: {
-      primary: isDarkMode ? 'text-white' : 'text-black-300',
-      secondary: isDarkMode ? 'text-[#B0B0B0]' : 'text-black-100',
-      accent: isDarkMode ? 'text-[#38BDF8]' : 'text-primary-300',
+      primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#1A1A1A'),
+      secondary: (isDark: boolean) => (isDark ? '#B0B0B0' : '#666666'),
+      tertiary: (isDark: boolean) => (isDark ? '#808080' : '#999999'),
+      inverse: (isDark: boolean) => (isDark ? '#FFFFFF' : '#1A1A1A'),
+      muted: (isDark: boolean) => (isDark ? '#666666' : '#9CA3AF'),
     },
     status: {
       pending: isDarkMode
@@ -141,6 +149,32 @@ export default function Index() {
       cancelled: isDarkMode
         ? 'bg-rose-900/30 text-rose-400'
         : 'bg-rose-100 text-rose-800',
+    },
+    colors: {
+      background: {
+        primary: (isDark: boolean) => (isDark ? '#121212' : '#F8F9FA'),
+        secondary: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      },
+      accent: {
+        primary: '#FF3366', // Modern, canlı pembe
+        secondary: '#7209B7', // Derin mor
+        tertiary: '#4361EE', // Elektrik mavisi
+      },
+      gradient: {
+        primary: ['#FF3366', '#7209B7'] as const,
+        secondary: ['#4361EE', '#3A0CA3'] as const,
+      },
+      status: {
+        pending: {
+          background: (isDark: boolean) => (isDark ? '#3A1D1D' : '#FFF1F1'),
+          text: (isDark: boolean) => (isDark ? '#FF9494' : '#DC2626'),
+        },
+        confirmed: {
+          background: (isDark: boolean) => (isDark ? '#1A2F35' : '#F0F9FF'),
+          text: (isDark: boolean) => (isDark ? '#7DD3FC' : '#0369A1'),
+        },
+        // ... diğer renkler
+      },
     },
   };
 
@@ -163,6 +197,18 @@ export default function Index() {
     return colors[status];
   };
 
+  const getStatusText = (
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  ) => {
+    const texts = {
+      pending: 'Beklemede',
+      confirmed: 'Onaylandı',
+      completed: 'Tamamlandı',
+      cancelled: 'İptal Edildi',
+    };
+    return texts[status] || status;
+  };
+
   const handleAppointmentsPress = () => {
     router.push('/(root)/(tabs)/appointments' as any);
   };
@@ -177,206 +223,226 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${theme.background}`}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header */}
+    <SafeAreaView
+      className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Kullanıcı Profil Header */}
         <Animated.View
           entering={FadeInDown.delay(100).springify()}
-          className="px-6 pt-6"
+          className="px-6 pt-6 pb-4"
         >
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className={`${theme.text.secondary} text-base font-rubik`}>
-                {isAdmin ? 'Admin Paneli' : 'Hoş Geldiniz'}
+          <BlurView
+            intensity={20}
+            className="flex-row items-center p-4 rounded-2xl overflow-hidden"
+          >
+            <Animated.Image
+              entering={FadeIn.delay(200)}
+              source={user?.avatar ? { uri: user.avatar } : images.avatar}
+              className="w-16 h-16 rounded-full"
+            />
+            <View className="ml-4 flex-1">
+              <Text className="text-white/60 text-base font-rubik">
+                Hoş Geldiniz 👋
               </Text>
-              <Text
-                className={`${theme.text.primary} text-2xl font-rubik-bold mt-1`}
-              >
+              <Text className="text-white text-xl font-rubik-bold mt-1">
                 {user?.name}
               </Text>
             </View>
-            <Pressable
-              onPress={() => router.push('/(root)/(tabs)/profile')}
-              className={`${theme.card.background} p-2 rounded-full shadow-sm`}
-            >
-              <Image
-                source={user?.avatar ? { uri: user.avatar } : images.avatar}
-                className="w-10 h-10 rounded-full"
-              />
-            </Pressable>
+            {isAdmin && (
+              <View className="px-3 py-1 bg-[#FF3366]/20 rounded-full">
+                <Text className="text-[#FF3366] font-rubik-medium">Admin</Text>
+              </View>
+            )}
+          </BlurView>
+        </Animated.View>
+
+        {/* Hero Section - Yeniden Tasarlandı */}
+        <Animated.View
+          entering={FadeInDown.delay(200).springify()}
+          className="mx-6 h-48 relative overflow-hidden rounded-3xl"
+        >
+          <Image
+            source={images.tattooBackground}
+            className="absolute w-full h-full"
+            style={{ opacity: 0.7 }}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            className="absolute w-full h-full"
+          />
+          <View className="absolute bottom-0 w-full p-6">
+            <Text className="text-white text-2xl font-rubik-bold">
+              Profesyonel Dövme Stüdyosu
+            </Text>
+            <Text className="text-white/80 font-rubik mt-2">
+              Hayalinizdeki dövmeyi gerçeğe dönüştürün
+            </Text>
           </View>
         </Animated.View>
 
-        {/* Admin için hızlı erişim kartları */}
-        {isAdmin && (
-          <View className="flex-row px-6 mt-8 space-x-4">
-            <Animated.View
-              entering={FadeInRight.delay(200).springify()}
-              className="flex-1"
-            >
-              <Pressable
-                onPress={handleAppointmentsPress}
-                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
-              >
-                <Text
-                  className={`${theme.text.accent} text-2xl font-rubik-bold`}
-                >
-                  {appointments.length}
-                </Text>
-                <Text
-                  className={`${theme.text.secondary} text-sm font-rubik mt-1`}
-                >
-                  Aktif Randevu
-                </Text>
-              </Pressable>
-            </Animated.View>
-
-            <Animated.View
-              entering={FadeInRight.delay(300).springify()}
-              className="flex-1"
-            >
-              <View
-                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
-              >
-                <Text
-                  className={`${theme.text.accent} text-2xl font-rubik-bold`}
-                >
-                  {recentWorks.length}
-                </Text>
-                <Text
-                  className={`${theme.text.secondary} text-sm font-rubik mt-1`}
-                >
-                  Yeni Çalışma
-                </Text>
-              </View>
-            </Animated.View>
-          </View>
-        )}
-
-        {/* Randevular - Yeniden Tasarlandı */}
-        <View className="mt-8 px-6">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className={`${theme.text.primary} text-xl font-rubik-bold`}>
-              Son Randevular
-            </Text>
-            <Pressable onPress={handleAppointmentsPress}>
-              <Text className={`${theme.text.accent} font-rubik-medium`}>
-                Tümünü Gör
-              </Text>
-            </Pressable>
-          </View>
-
-          {appointments.map((appointment, index) => (
-            <Animated.View
-              key={appointment._id}
-              entering={FadeInDown.delay(400 + index * 100).springify()}
-              className="mb-4"
-            >
-              <Pressable
-                className={`${theme.card.background} p-4 rounded-2xl border ${theme.card.border}`}
-                onPress={() => {
-                  // Randevu detayına yönlendirme
-                }}
-              >
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-1">
-                    <View className="flex-row items-center space-x-2 mb-2">
-                      <View
-                        className={`w-2 h-2 rounded-full ${
-                          appointment.status === 'confirmed'
-                            ? 'bg-neutral-400'
-                            : appointment.status === 'pending'
-                              ? 'bg-amber-400'
-                              : appointment.status === 'completed'
-                                ? 'bg-emerald-400'
-                                : 'bg-rose-400'
-                        }`}
-                      />
-                      <Text
-                        className={`${theme.text.secondary} text-sm font-rubik-medium`}
-                      >
-                        {appointment.status.toUpperCase()}
-                      </Text>
-                    </View>
-                    <Text
-                      className={`${theme.text.primary} text-lg font-rubik-medium`}
-                    >
-                      {appointment.designDetails.style}
-                    </Text>
-                    <Text className={`${theme.text.secondary} text-sm mt-1`}>
-                      {appointment.designDetails.size}
-                    </Text>
-                  </View>
-                  <Text
-                    className={`${theme.text.accent} text-lg font-rubik-bold`}
-                  >
-                    {appointment.price}₺
-                  </Text>
-                </View>
-                <View className={`mt-3 pt-3 border-t ${theme.card.border}`}>
-                  <Text className={`${theme.text.secondary} text-sm`}>
-                    {new Date(appointment.dateTime).toLocaleString('tr-TR', {
-                      day: 'numeric',
-                      month: 'long',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                </View>
-              </Pressable>
-            </Animated.View>
-          ))}
-        </View>
-
-        {/* Portfolyo - Yeniden Tasarlandı */}
-        <View className="mt-8 px-6 pb-8">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className={`${theme.text.primary} text-xl font-rubik-bold`}>
-              Son Çalışmalar
-            </Text>
-            <Pressable onPress={() => router.push('/(root)/(tabs)/portfolio')}>
-              <Text className={`${theme.text.accent} font-rubik-medium`}>
-                Tümünü Gör
-              </Text>
-            </Pressable>
-          </View>
+        {/* Hızlı Erişim Kartları */}
+        <View className="mt-8">
+          <Animated.Text
+            entering={FadeInDown.delay(300)}
+            className="px-6 text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mb-4"
+          >
+            Hızlı Erişim
+          </Animated.Text>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="space-x-4"
+            className="pl-6"
+          >
+            <Animated.View entering={SlideInRight.delay(400)} className="mr-4">
+              <Pressable
+                onPress={() => router.push('/create-appointment')}
+                className="w-40 h-48 relative overflow-hidden rounded-2xl"
+              >
+                <LinearGradient
+                  colors={theme.colors.gradient.primary}
+                  className="absolute w-full h-full"
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                />
+                <View className="p-4 flex-1 justify-between">
+                  <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
+                    <Image
+                      source={icons.calendar}
+                      className="w-5 h-5"
+                      style={{ tintColor: '#FFFFFF' }}
+                    />
+                  </View>
+                  <View>
+                    <Text className="text-white font-rubik-bold text-lg">
+                      Randevu Al
+                    </Text>
+                    <Text className="text-white/70 font-rubik text-sm mt-1">
+                      Hemen başlayalım
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </Animated.View>
+
+            <Animated.View entering={SlideInRight.delay(500)} className="mr-4">
+              <Pressable
+                onPress={() => router.push('/portfolio')}
+                className="w-40 h-48 relative overflow-hidden rounded-2xl"
+              >
+                <LinearGradient
+                  colors={theme.colors.gradient.secondary}
+                  className="absolute w-full h-full"
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                />
+                <View className="p-4 flex-1 justify-between">
+                  <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
+                    <Image
+                      source={icons.gallery}
+                      className="w-5 h-5"
+                      style={{ tintColor: '#FFFFFF' }}
+                    />
+                  </View>
+                  <View>
+                    <Text className="text-white font-rubik-bold text-lg">
+                      Portfolyo
+                    </Text>
+                    <Text className="text-white/70 font-rubik text-sm mt-1">
+                      Çalışmalarımız
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </Animated.View>
+          </ScrollView>
+        </View>
+
+        {/* Son Çalışmalar */}
+        <View className="mt-8">
+          <Animated.Text
+            entering={FadeInDown.delay(600)}
+            className="px-6 text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mb-4"
+          >
+            Son Çalışmalar
+          </Animated.Text>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="pl-6"
           >
             {recentWorks.map((work, index) => (
               <Animated.View
                 key={work._id}
-                entering={FadeInRight.delay(500 + index * 100).springify()}
-                className="w-64"
+                entering={SlideInRight.delay(700 + index * 100)}
+                className="mr-4"
               >
-                <Pressable
-                  className={`${theme.card.background} rounded-2xl overflow-hidden border ${theme.card.border}`}
-                >
+                <Pressable className="w-64 rounded-2xl overflow-hidden">
                   <Image
                     source={{ uri: work.images[0] }}
-                    className="w-full h-64 rounded-t-2xl"
-                    resizeMode="cover"
+                    className="w-full h-80"
+                    style={{ borderRadius: 20 }}
                   />
-                  <View className="p-3">
-                    <Text
-                      className={`${theme.text.primary} text-lg font-rubik-medium`}
-                    >
+                  <BlurView
+                    intensity={80}
+                    className="absolute bottom-0 w-full p-4"
+                  >
+                    <Text className="text-white font-rubik-bold text-lg">
                       {work.title}
                     </Text>
-                    <View className="flex-row items-center space-x-2 mt-1">
-                      <View className="w-1.5 h-1.5 rounded-full bg-primary-300" />
-                      <Text className={`${theme.text.secondary} text-sm`}>
-                        {work.style}
-                      </Text>
-                    </View>
-                  </View>
+                    <Text className="text-white/80 font-rubik mt-1">
+                      {work.style}
+                    </Text>
+                  </BlurView>
                 </Pressable>
               </Animated.View>
             ))}
           </ScrollView>
+        </View>
+
+        {/* Son Randevular */}
+        <View className="mt-8 px-6 pb-20">
+          <Animated.Text
+            entering={FadeInDown.delay(800)}
+            className="text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mb-4"
+          >
+            Son Randevular
+          </Animated.Text>
+
+          {appointments.slice(0, 3).map((appointment, index) => (
+            <Animated.View
+              key={appointment._id}
+              entering={FadeInDown.delay(900 + index * 100).springify()}
+              className="mb-4"
+            >
+              <Pressable
+                onPress={() => router.push(`/appointments/${appointment._id}`)}
+                className="p-4 rounded-2xl bg-gradient-to-r from-[${theme.colors.background.secondary(isDarkMode)}] to-[${theme.colors.background.primary(isDarkMode)}]"
+              >
+                <View className="flex-row items-center justify-between">
+                  <View>
+                    <Text
+                      className={`${theme.text.primary} text-lg font-rubik-medium`}
+                    >
+                      {format(new Date(appointment.dateTime), 'd MMMM yyyy')}
+                    </Text>
+                    <Text className={`${theme.text.secondary} mt-1`}>
+                      {format(new Date(appointment.dateTime), 'HH:mm')}
+                    </Text>
+                  </View>
+                  <View
+                    className={`px-4 py-2 rounded-full bg-[${getStatusColor(appointment.status)}]`}
+                  >
+                    <Text className="text-white font-rubik-medium">
+                      {getStatusText(appointment.status)}
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </Animated.View>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

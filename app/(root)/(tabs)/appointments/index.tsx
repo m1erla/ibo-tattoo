@@ -169,7 +169,7 @@ export default function Appointments() {
             <Image
               source={icons.plus}
               className="w-6 h-6"
-              style={{ tintColor: '#ffffff' }}
+              style={{ tintColor: isDarkMode ? '#FFFFFF' : '#000000' }}
             />
           </Pressable>
         </View>
@@ -204,7 +204,13 @@ export default function Appointments() {
                 <Animated.View
                   key={appointment.$id}
                   entering={FadeInDown.delay(400)}
-                  className={`p-4 rounded-2xl mb-3 bg-[${theme.colors.card.background(isDarkMode)}]`}
+                  className="bg-gradient-to-r from-[${theme.colors.background.secondary(isDarkMode)}] to-[${theme.colors.background.primary(isDarkMode)}] p-4 rounded-2xl mb-4 shadow-lg"
+                  style={{
+                    shadowColor: theme.colors.accent.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 8,
+                  }}
                 >
                   <Pressable
                     onPress={() =>
@@ -219,37 +225,21 @@ export default function Appointments() {
                     }
                   >
                     <View className="flex-row items-center justify-between">
-                      <View>
-                        <Text
-                          className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
-                        >
+                      <View className="flex-1">
+                        <Text className="text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}]">
                           {format(
                             new Date(appointment.dateTime),
-                            'd MMMM yyyy - HH:mm',
-                            {
-                              locale: tr,
-                            }
+                            'd MMMM yyyy'
                           )}
                         </Text>
-                        <Text
-                          className={`text-sm font-rubik mt-1 text-[${theme.colors.text.secondary(isDarkMode)}]`}
-                        >
-                          {`${appointment.designDetails.style} - ${appointment.designDetails.size}`}
+                        <Text className="text-sm font-rubik text-[${theme.colors.text.secondary(isDarkMode)}]">
+                          {format(new Date(appointment.dateTime), 'HH:mm')}
                         </Text>
-                        {user?.role === 'admin' && (
-                          <Text
-                            className={`text-sm font-rubik mt-1 text-[${theme.colors.accent.primary}]`}
-                          >
-                            Müşteri ID: {appointment.clientId}
-                          </Text>
-                        )}
                       </View>
                       <View
-                        className={`px-3 py-1 rounded-full bg-[${theme.colors.status[appointment.status].background(isDarkMode)}]`}
+                        className={`px-4 py-2 rounded-full bg-[${getStatusColor(appointment.status)}]`}
                       >
-                        <Text
-                          className={`text-sm font-rubik-medium text-[${theme.colors.status[appointment.status].text(isDarkMode)}]`}
-                        >
+                        <Text className="text-white font-rubik-medium">
                           {getStatusText(appointment.status)}
                         </Text>
                       </View>

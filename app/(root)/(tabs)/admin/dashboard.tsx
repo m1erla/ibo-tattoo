@@ -2,14 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyticsService } from '@/lib/services/analytics';
-import { LineChart, PieChart } from 'react-native-chart-kit';
+import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
 import { useTheme } from '@/lib/theme-provider';
+import { SatisfactionMeter } from '@/components/SatisfactionMeter';
 
 export default function Dashboard() {
   const { isDarkMode, theme } = useTheme();
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [demographics, setDemographics] = useState({});
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    dailyAppointments: {
+      labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
+      datasets: [
+        {
+          data: [0, 0, 0, 0, 0, 0, 0],
+        },
+      ],
+    },
+    popularStyles: {
+      labels: ['Minimal', 'Realistik', 'Traditional', 'Tribal'],
+      datasets: [
+        {
+          data: [0, 0, 0, 0],
+        },
+      ],
+    },
+    customerSatisfaction: 0,
+  });
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -63,9 +83,9 @@ export default function Dashboard() {
     >
       <ScrollView className="flex-1 p-4">
         <Text
-          className={`text-2xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}]`}
+          className={`text-2xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mb-6`}
         >
-          Admin Dashboard
+          Admin Paneli
         </Text>
 
         {/* Gelir Özeti */}
@@ -85,8 +105,12 @@ export default function Dashboard() {
         </View>
 
         {/* Demografik Veriler */}
-        <View className="bg-white p-4 rounded-2xl">
-          <Text className="text-lg font-rubik-medium text-black-300 mb-4">
+        <View
+          className={`p-4 rounded-2xl bg-[${theme.colors.card.background(isDarkMode)}]`}
+        >
+          <Text
+            className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+          >
             Dövme Stilleri Dağılımı
           </Text>
           <PieChart
@@ -97,9 +121,10 @@ export default function Dashboard() {
             backgroundColor="transparent"
             paddingLeft="15"
             chartConfig={{
-              backgroundColor: isDarkMode ? '#121212' : '#FAFAFA',
-              backgroundGradientFrom: isDarkMode ? '#121212' : '#FAFAFA',
-              backgroundGradientTo: isDarkMode ? '#121212' : '#FAFAFA',
+              backgroundColor: theme.colors.background.primary(isDarkMode),
+              backgroundGradientFrom:
+                theme.colors.background.primary(isDarkMode),
+              backgroundGradientTo: theme.colors.background.primary(isDarkMode),
               color: (opacity = 1) =>
                 isDarkMode
                   ? `rgba(224, 224, 224, ${opacity})`
@@ -111,6 +136,51 @@ export default function Dashboard() {
             }}
           />
         </View>
+
+        {/* Günlük randevu grafiği */}
+        <LineChart
+          data={metrics.dailyAppointments}
+          width={300}
+          height={200}
+          chartConfig={{
+            backgroundColor: theme.colors.background.primary(isDarkMode),
+            backgroundGradientFrom: theme.colors.background.primary(isDarkMode),
+            backgroundGradientTo: theme.colors.background.primary(isDarkMode),
+            color: (opacity = 1) =>
+              isDarkMode
+                ? `rgba(224, 224, 224, ${opacity})`
+                : `rgba(25, 29, 49, ${opacity})`,
+            labelColor: (opacity = 1) =>
+              isDarkMode
+                ? `rgba(224, 224, 224, ${opacity})`
+                : `rgba(25, 29, 49, ${opacity})`,
+          }}
+        />
+
+        {/* Popüler stiller */}
+        <BarChart
+          data={metrics.popularStyles}
+          width={300}
+          height={200}
+          yAxisLabel=""
+          yAxisSuffix=""
+          chartConfig={{
+            backgroundColor: theme.colors.background.primary(isDarkMode),
+            backgroundGradientFrom: theme.colors.background.primary(isDarkMode),
+            backgroundGradientTo: theme.colors.background.primary(isDarkMode),
+            color: (opacity = 1) =>
+              isDarkMode
+                ? `rgba(224, 224, 224, ${opacity})`
+                : `rgba(25, 29, 49, ${opacity})`,
+            labelColor: (opacity = 1) =>
+              isDarkMode
+                ? `rgba(224, 224, 224, ${opacity})`
+                : `rgba(25, 29, 49, ${opacity})`,
+          }}
+        />
+
+        {/* Müşteri memnuniyeti */}
+        <SatisfactionMeter value={metrics.customerSatisfaction} />
       </ScrollView>
     </SafeAreaView>
   );
