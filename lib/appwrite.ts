@@ -12,19 +12,26 @@ export const appwriteConfig = {
     pushTokensCollectionId: config.pushTokensCollectionId,
     appointmentsCollectionId: config.appointmentsCollectionId,
     portfolioCollectionId: config.portfolioCollectionId,
+    storageBucketId: config.storageBucketId,
+}
+
+if (!appwriteConfig.endpoint || !appwriteConfig.projectId) {
+  throw new Error('Appwrite configuration is missing');
 }
 
 // Appwrite client
-const client = new Client()
-    .setEndpoint(config.endpoint!)
-    .setProject(config.projectId!);
+const client = new Client();
+client
+  .setEndpoint(appwriteConfig.endpoint)
+  .setProject(appwriteConfig.projectId);
 
-
-export const databases = new Databases(client)
-export const storage = new Storage(client)
-export const account = new Account(client)
-export const avatar = new Avatars(client)
-export const functions = new Functions(client)
+// Realtime için client'ı export et
+export { client };
+export const databases = new Databases(client);
+export const storage = new Storage(client);
+export const account = new Account(client);
+export const avatar = new Avatars(client);
+export const functions = new Functions(client);
 
 export async function login() {
   try {
@@ -126,5 +133,3 @@ export async function getCurrentUser() {
     return null;
   }
 }
-
-export { client }; // Client'ı da export et

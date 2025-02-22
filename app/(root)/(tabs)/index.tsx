@@ -122,38 +122,14 @@ export default function Index() {
 
   // Tema bazlı renkler güncellendi
   const theme = {
-    background: {
-      primary: (isDark: boolean) => (isDark ? '#121212' : '#FAFAFA'),
-    },
-    card: {
-      background: isDarkMode ? 'bg-[#1E1E1E]' : 'bg-white',
-      border: isDarkMode ? 'border-[#2A2A2A]' : 'border-gray-100',
-    },
-    text: {
-      primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#1A1A1A'),
-      secondary: (isDark: boolean) => (isDark ? '#B0B0B0' : '#666666'),
-      tertiary: (isDark: boolean) => (isDark ? '#808080' : '#999999'),
-      inverse: (isDark: boolean) => (isDark ? '#FFFFFF' : '#1A1A1A'),
-      muted: (isDark: boolean) => (isDark ? '#666666' : '#9CA3AF'),
-    },
-    status: {
-      pending: isDarkMode
-        ? 'bg-amber-900/30 text-amber-400'
-        : 'bg-amber-100 text-amber-800',
-      confirmed: isDarkMode
-        ? 'bg-blue-900/30 text-blue-400'
-        : 'bg-blue-100 text-blue-800',
-      completed: isDarkMode
-        ? 'bg-emerald-900/30 text-emerald-400'
-        : 'bg-emerald-100 text-emerald-800',
-      cancelled: isDarkMode
-        ? 'bg-rose-900/30 text-rose-400'
-        : 'bg-rose-100 text-rose-800',
-    },
     colors: {
       background: {
         primary: (isDark: boolean) => (isDark ? '#121212' : '#F8F9FA'),
         secondary: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      },
+      text: {
+        primary: (isDark: boolean) => (isDark ? '#FFFFFF' : '#000000'),
+        secondary: (isDark: boolean) => (isDark ? '#B0B0B0' : '#666666'),
       },
       accent: {
         primary: '#FF3366', // Modern, canlı pembe
@@ -164,16 +140,22 @@ export default function Index() {
         primary: ['#FF3366', '#7209B7'] as const,
         secondary: ['#4361EE', '#3A0CA3'] as const,
       },
+      card: {
+        background: (isDark: boolean) => (isDark ? '#1A1A1A' : '#FFFFFF'),
+      },
       status: {
-        pending: {
-          background: (isDark: boolean) => (isDark ? '#3A1D1D' : '#FFF1F1'),
-          text: (isDark: boolean) => (isDark ? '#FF9494' : '#DC2626'),
-        },
-        confirmed: {
-          background: (isDark: boolean) => (isDark ? '#1A2F35' : '#F0F9FF'),
-          text: (isDark: boolean) => (isDark ? '#7DD3FC' : '#0369A1'),
-        },
-        // ... diğer renkler
+        pending: isDarkMode
+          ? 'bg-amber-900/30 text-amber-400'
+          : 'bg-amber-100 text-amber-800',
+        confirmed: isDarkMode
+          ? 'bg-blue-900/30 text-blue-400'
+          : 'bg-blue-100 text-blue-800',
+        completed: isDarkMode
+          ? 'bg-emerald-900/30 text-emerald-400'
+          : 'bg-emerald-100 text-emerald-800',
+        cancelled: isDarkMode
+          ? 'bg-rose-900/30 text-rose-400'
+          : 'bg-rose-100 text-rose-800',
       },
     },
   };
@@ -242,10 +224,14 @@ export default function Index() {
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4 flex-1">
-              <Text className="text-white/60 text-base font-rubik">
+              <Text
+                className={`text-base font-rubik text-[${theme.colors.text.secondary(isDarkMode)}]`}
+              >
                 Hoş Geldiniz 👋
               </Text>
-              <Text className="text-white text-xl font-rubik-bold mt-1">
+              <Text
+                className={`text-xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mt-1`}
+              >
                 {user?.name}
               </Text>
             </View>
@@ -268,14 +254,14 @@ export default function Index() {
             style={{ opacity: 0.7 }}
           />
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            colors={['transparent', 'rgba(2,4,5,1.8)']}
             className="absolute w-full h-full"
           />
           <View className="absolute bottom-0 w-full p-6">
-            <Text className="text-white text-2xl font-rubik-bold">
+            <Text className="text-2xl font-rubik-bold text-white">
               Profesyonel Dövme Stüdyosu
             </Text>
-            <Text className="text-white/80 font-rubik mt-2">
+            <Text className="font-rubik mt-2 text-white">
               Hayalinizdeki dövmeyi gerçeğe dönüştürün
             </Text>
           </View>
@@ -307,18 +293,20 @@ export default function Index() {
                   end={{ x: 1, y: 1 }}
                 />
                 <View className="p-4 flex-1 justify-between">
-                  <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
+                  <View className="w-10 h-10 bg-white/10 rounded-full items-center justify-center">
                     <Image
                       source={icons.calendar}
                       className="w-5 h-5"
-                      style={{ tintColor: '#FFFFFF' }}
+                      style={{
+                        tintColor: 'white',
+                      }}
                     />
                   </View>
                   <View>
-                    <Text className="text-white font-rubik-bold text-lg">
+                    <Text className="text-lg font-rubik-bold text-white">
                       Randevu Al
                     </Text>
-                    <Text className="text-white/70 font-rubik text-sm mt-1">
+                    <Text className="text-sm font-rubik mt-1 text-white">
                       Hemen başlayalım
                     </Text>
                   </View>
@@ -338,18 +326,20 @@ export default function Index() {
                   end={{ x: 1, y: 1 }}
                 />
                 <View className="p-4 flex-1 justify-between">
-                  <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
+                  <View className="w-10 h-10 bg-white/35 rounded-full items-center justify-center">
                     <Image
                       source={icons.gallery}
                       className="w-5 h-5"
-                      style={{ tintColor: '#FFFFFF' }}
+                      style={{
+                        tintColor: 'white',
+                      }}
                     />
                   </View>
                   <View>
-                    <Text className="text-white font-rubik-bold text-lg">
+                    <Text className={`text-lg font-rubik-bold text-white`}>
                       Portfolyo
                     </Text>
-                    <Text className="text-white/70 font-rubik text-sm mt-1">
+                    <Text className={`text-sm font-rubik mt-1 text-white`}>
                       Çalışmalarımız
                     </Text>
                   </View>
@@ -389,10 +379,14 @@ export default function Index() {
                     intensity={80}
                     className="absolute bottom-0 w-full p-4"
                   >
-                    <Text className="text-white font-rubik-bold text-lg">
+                    <Text
+                      className={`text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}]`}
+                    >
                       {work.title}
                     </Text>
-                    <Text className="text-white/80 font-rubik mt-1">
+                    <Text
+                      className={`font-rubik mt-1 text-[${theme.colors.text.secondary(isDarkMode)}]`}
+                    >
                       {work.style}
                     </Text>
                   </BlurView>
@@ -419,23 +413,27 @@ export default function Index() {
             >
               <Pressable
                 onPress={() => router.push(`/appointments/${appointment._id}`)}
-                className="p-4 rounded-2xl bg-gradient-to-r from-[${theme.colors.background.secondary(isDarkMode)}] to-[${theme.colors.background.primary(isDarkMode)}]"
+                className={`p-4 rounded-2xl bg-[${theme.colors.card.background(isDarkMode)}]`}
               >
                 <View className="flex-row items-center justify-between">
                   <View>
                     <Text
-                      className={`${theme.text.primary} text-lg font-rubik-medium`}
+                      className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
                     >
                       {format(new Date(appointment.dateTime), 'd MMMM yyyy')}
                     </Text>
-                    <Text className={`${theme.text.secondary} mt-1`}>
+                    <Text
+                      className={`mt-1 text-[${theme.colors.text.secondary(isDarkMode)}]`}
+                    >
                       {format(new Date(appointment.dateTime), 'HH:mm')}
                     </Text>
                   </View>
                   <View
-                    className={`px-4 py-2 rounded-full bg-[${getStatusColor(appointment.status)}]`}
+                    className={`px-4 py-2 rounded-full ${getStatusColor(appointment.status)}`}
                   >
-                    <Text className="text-white font-rubik-medium">
+                    <Text
+                      className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+                    >
                       {getStatusText(appointment.status)}
                     </Text>
                   </View>

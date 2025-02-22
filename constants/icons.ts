@@ -16,6 +16,8 @@ import star from "@/assets/icons/star.png";
 import logout from "@/assets/icons/logout.png";
 import plus from "@/assets/icons/plus.png";
 import dashboard from "@/assets/icons/dashboard.png";
+import settings from "@/assets/icons/settings.png";
+import payment from "@/assets/icons/payment.png";
 
 export default {
   google,
@@ -36,4 +38,6 @@ export default {
   logout,
   plus,
   dashboard,
+  settings,
+  payment,
 };

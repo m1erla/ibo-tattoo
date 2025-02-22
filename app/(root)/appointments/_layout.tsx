@@ -14,21 +14,23 @@ export default function AppointmentsLayout() {
       }}
     >
       <Stack.Screen
-        name="index"
+        name="create"
         options={{
-          title: 'Randevular',
-        }}
-      />
-      <Stack.Screen
-        name="[id]"
-        options={{
-          title: 'Randevu Detayı',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
         }}
       />
       <Stack.Screen
         name="create-details"
         options={{
-          title: 'Randevu Detayları',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="[id]"
+        options={{
+          animation: 'slide_from_right',
         }}
       />
     </Stack>

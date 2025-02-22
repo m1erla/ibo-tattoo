@@ -1,13 +1,16 @@
 import { databases, appwriteConfig } from '@/lib/appwrite';
 import { ID, Query } from 'react-native-appwrite';
 
+interface ReviewData {
+  userId: string;
+  appointmentId: string;
+  rating: number;
+  comment: string;
+  images?: string[];
+}
+
 export const reviewsService = {
-  createReview: async (data: {
-    userId: string;
-    appointmentId: string;
-    rating: number;
-    comment: string;
-  }) => {
+  create: async (data: ReviewData) => {
     try {
       return await databases.createDocument(
         appwriteConfig.databaseId!,

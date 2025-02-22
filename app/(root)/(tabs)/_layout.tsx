@@ -4,7 +4,6 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 import icons from '@/constants/icons';
 import { useGlobalContext } from '@/lib/global-provider';
@@ -18,8 +17,8 @@ function TabIcon({
   color,
 }: {
   source: any;
-  focused: any;
-  color: any;
+  focused: boolean;
+  color: string;
 }) {
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -48,7 +47,6 @@ function TabIcon({
         },
         animatedStyle,
       ]}
-      resizeMode="contain"
     />
   );
 }
@@ -57,6 +55,49 @@ export default function TabLayout() {
   const { user } = useGlobalContext();
   const { isDarkMode, theme } = useTheme();
   const isAdmin = user?.role === 'admin';
+
+  const clientTabs = [
+    {
+      name: 'index',
+      title: 'Ana Sayfa',
+      icon: icons.home,
+    },
+    {
+      name: 'portfolio',
+      title: 'Portfolyo',
+      icon: icons.gallery,
+    },
+    {
+      name: 'appointments',
+      title: 'Randevular',
+      icon: icons.calendar,
+    },
+    {
+      name: 'profile',
+      title: 'Profil',
+      icon: icons.person,
+    },
+  ];
+
+  const adminTabs = [
+    {
+      name: 'index',
+      title: 'Ana Sayfa',
+      icon: icons.home,
+    },
+    {
+      name: 'profile',
+      title: 'Profil',
+      icon: icons.person,
+    },
+    {
+      name: 'admin',
+      title: 'Yönetim',
+      icon: icons.settings,
+    },
+  ];
+
+  const tabs = isAdmin ? adminTabs : clientTabs;
 
   return (
     <Tabs
@@ -76,104 +117,33 @@ export default function TabLayout() {
         },
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: isDarkMode ? '#FFFFFF' : '#000000',
-        tabBarInactiveTintColor: isDarkMode ? '#666666' : '#666666',
+        tabBarActiveTintColor: '#FF3366',
+        tabBarInactiveTintColor: isDarkMode ? '#666666' : '#999999',
         tabBarLabelStyle: {
           fontFamily: 'Rubik-Medium',
           fontSize: 12,
-          color: isDarkMode ? '#FFFFFF' : '#000000',
         },
         tabBarItemStyle: {
           paddingVertical: 8,
         },
-        tabBarIcon: ({ focused, color }) => (
-          <Animated.View
-            style={[
-              {
-                padding: 8,
-                borderRadius: 12,
-                backgroundColor: focused
-                  ? theme.colors.accent.primary + '20'
-                  : 'transparent',
-              },
-            ]}
-          >
-            <TabIcon source={icons.home} focused={focused} color={color} />
-          </Animated.View>
-        ),
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Ana Sayfa',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              source={icons.home}
-              focused={focused}
-              color={focused ? '#FF3366' : isDarkMode ? '#666666' : '#999999'}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="appointments"
-        options={{
-          title: 'Randevular',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon source={icons.calendar} focused={focused} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="portfolio"
-        options={{
-          title: 'Portfolyo',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon
-              source={require('@/assets/icons/gallery.png')}
-              focused={focused}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon source={icons.person} focused={focused} color={color} />
-          ),
-        }}
-      />
-
-      {/* Admin sekmesi - sadece admin rolü için görünür */}
-      <Tabs.Screen
-        name="admin"
-        options={{
-          href: isAdmin ? '/admin/dashboard' : null, // Admin değilse sekme gizlenir
-          title: 'Admin',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              source={icons.dashboard}
-              focused={focused}
-              color={focused ? '#FF3366' : isDarkMode ? '#666666' : '#999999'}
-            />
-          ),
-        }}
-      />
-
-      {/* Randevu oluşturma sekmesini gizle */}
-      <Tabs.Screen
-        name="create-appointment"
-        options={{
-          href: null,
-        }}
-      />
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon
+                source={tab.icon}
+                focused={focused}
+                color={focused ? '#FF3366' : isDarkMode ? '#666666' : '#999999'}
+              />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

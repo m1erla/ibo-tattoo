@@ -175,22 +175,31 @@ export default function Appointments() {
         </View>
 
         {/* Randevu Listesi */}
-        <View className="mt-8 px-4 pb-8">
+        <View className="mt-6 px-4 pb-8">
           <Animated.Text
             entering={FadeInDown.delay(300)}
-            className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+            className={`text-xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}] mb-6`}
           >
             {user?.role === 'admin' ? 'Tüm Randevular' : 'Randevularım'}
           </Animated.Text>
 
           {appointments.length === 0 ? (
-            <Text
-              className={`text-[${theme.colors.text.secondary(isDarkMode)}] font-rubik text-center mt-4`}
+            <Animated.View
+              entering={FadeInDown.delay(400)}
+              className="items-center justify-center py-8"
             >
-              Henüz randevu bulunmamaktadır.
-            </Text>
+              <Image
+                source={require('@/assets/icons/calendar.png')}
+                className="w-24 h-24 opacity-50 mb-4"
+              />
+              <Text
+                className={`text-[${theme.colors.text.secondary(isDarkMode)}] font-rubik-medium text-center`}
+              >
+                Henüz randevu bulunmamaktadır
+              </Text>
+            </Animated.View>
           ) : (
-            appointments.map((appointment) => {
+            appointments.map((appointment, index) => {
               const appointmentDate = format(
                 new Date(appointment.dateTime),
                 'yyyy-MM-dd'
@@ -203,13 +212,13 @@ export default function Appointments() {
               return (
                 <Animated.View
                   key={appointment.$id}
-                  entering={FadeInDown.delay(400)}
-                  className="bg-gradient-to-r from-[${theme.colors.background.secondary(isDarkMode)}] to-[${theme.colors.background.primary(isDarkMode)}] p-4 rounded-2xl mb-4 shadow-lg"
+                  entering={FadeInDown.delay(400 + index * 100)}
+                  className={`bg-[${theme.colors.card.background(isDarkMode)}] p-5 rounded-3xl mb-4`}
                   style={{
                     shadowColor: theme.colors.accent.primary,
-                    shadowOffset: { width: 0, height: 4 },
+                    shadowOffset: { width: 0, height: 8 },
                     shadowOpacity: 0.1,
-                    shadowRadius: 8,
+                    shadowRadius: 12,
                   }}
                 >
                   <Pressable
@@ -223,26 +232,39 @@ export default function Appointments() {
                         },
                       })
                     }
+                    className="flex-row items-center space-x-4"
                   >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-1">
-                        <Text className="text-lg font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}]">
-                          {format(
-                            new Date(appointment.dateTime),
-                            'd MMMM yyyy'
-                          )}
-                        </Text>
-                        <Text className="text-sm font-rubik text-[${theme.colors.text.secondary(isDarkMode)}]">
-                          {format(new Date(appointment.dateTime), 'HH:mm')}
-                        </Text>
-                      </View>
-                      <View
-                        className={`px-4 py-2 rounded-full bg-[${getStatusColor(appointment.status)}]`}
+                    <View
+                      className={`w-12 h-12 rounded-2xl bg-[${theme.colors.accent.primary}20] items-center justify-center`}
+                    >
+                      <Text
+                        className={`text-[${theme.colors.accent.primary}] font-rubik-bold text-xl`}
                       >
-                        <Text className="text-white font-rubik-medium">
-                          {getStatusText(appointment.status)}
-                        </Text>
-                      </View>
+                        {format(new Date(appointment.dateTime), 'd')}
+                      </Text>
+                    </View>
+
+                    <View className="flex-1">
+                      <Text
+                        className={`text-base font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}]`}
+                      >
+                        {format(new Date(appointment.dateTime), 'MMMM yyyy')}
+                      </Text>
+                      <Text
+                        className={`text-sm font-rubik text-[${theme.colors.text.secondary(isDarkMode)}] mt-1`}
+                      >
+                        {format(new Date(appointment.dateTime), 'HH:mm')}
+                      </Text>
+                    </View>
+
+                    <View
+                      className={`px-4 py-2 rounded-xl bg-[${theme.colors.status[appointment.status].background(isDarkMode)}]`}
+                    >
+                      <Text
+                        className={`text-[${theme.colors.status[appointment.status].text(isDarkMode)}] font-rubik-medium text-sm`}
+                      >
+                        {getStatusText(appointment.status)}
+                      </Text>
                     </View>
                   </Pressable>
 

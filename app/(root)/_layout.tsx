@@ -67,7 +67,19 @@ export default function AppLayout() {
         },
       }}
     >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          headerShown: false,
+          animation: 'fade',
+        }}
+      />
+      <Stack.Screen
+        name="appointments"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

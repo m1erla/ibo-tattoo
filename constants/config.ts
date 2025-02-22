@@ -7,6 +7,7 @@ const config = {
   pushTokensCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PUSH_TOKENS_COLLECTION_ID || "push_tokens",
   portfolioCollectionId: process.env.EXPO_PUBLIC_APPWRITE_PORTFOLIO_COLLECTION_ID,
   portfolioImagesBucketId: process.env.EXPO_PUBLIC_APPWRITE_PORTFOLIO_IMAGES_BUCKET_ID,
+  storageBucketId: process.env.EXPO_PUBLIC_APPWRITE_STORAGE_BUCKET_ID,
 };
 
 export default config; 

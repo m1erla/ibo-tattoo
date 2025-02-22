@@ -1,13 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Pressable,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyticsService } from '@/lib/services/analytics';
 import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
 import { useTheme } from '@/lib/theme-provider';
 import { SatisfactionMeter } from '@/components/SatisfactionMeter';
+import { useRouter } from 'expo-router';
+import icons from '@/constants/icons';
+
+interface AdminCardProps {
+  title: string;
+  icon: any;
+  onPress: () => void;
+}
+
+const AdminCard: React.FC<AdminCardProps> = ({ title, icon, onPress }) => {
+  const { isDarkMode, theme } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`flex-row items-center p-4 mb-4 rounded-2xl bg-[${theme.colors.card.background(isDarkMode)}] border-[1px] border-[${theme.colors.border.primary(isDarkMode)}]`}
+    >
+      <Image
+        source={icon}
+        style={{
+          width: 24,
+          height: 24,
+          tintColor: theme.colors.text.primary(isDarkMode),
+        }}
+      />
+      <Text
+        className={`ml-3 text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+      >
+        {title}
+      </Text>
+    </Pressable>
+  );
+};
 
 export default function Dashboard() {
   const { isDarkMode, theme } = useTheme();
+  const router = useRouter();
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [demographics, setDemographics] = useState({});
   const [loading, setLoading] = useState(true);
@@ -35,10 +76,10 @@ export default function Dashboard() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        const revenue = await analyticsService.getMonthlyRevenue();
-        const demo = await analyticsService.getCustomerDemographics();
+        const stats = await analyticsService.getMonthlyStats(0);
+        const demo = await analyticsService.getClientDemographics();
 
-        setMonthlyRevenue(revenue);
+        setMonthlyRevenue(stats.revenue);
         setDemographics(demo || {});
       } catch (error) {
         console.error('Dashboard veri yükleme hatası:', error);
@@ -49,6 +90,24 @@ export default function Dashboard() {
 
     loadDashboardData();
   }, []);
+
+  const formatCurrency = (value: number) => {
+    try {
+      const numValue = Number(String(value).replace(/[^0-9.-]+/g, ''));
+      if (isNaN(numValue)) return '0 ₺';
+
+      return (
+        new Intl.NumberFormat('tr-TR', {
+          style: 'decimal',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(numValue) + ' ₺'
+      );
+    } catch (error) {
+      console.error('Para formatı hatası:', error);
+      return '0 ₺';
+    }
+  };
 
   if (loading) {
     return (
@@ -85,8 +144,32 @@ export default function Dashboard() {
         <Text
           className={`text-2xl font-rubik-bold text-[${theme.colors.text.primary(isDarkMode)}] mb-6`}
         >
-          Admin Paneli
+          Admin Panel
         </Text>
+
+        {/* Yönetim Kartları */}
+        <View className="mb-6">
+          <AdminCard
+            title="Portfolyo Yönetimi"
+            icon={icons.gallery}
+            onPress={() => router.push('/admin/portfolio-management')}
+          />
+          <AdminCard
+            title="Randevu Yönetimi"
+            icon={icons.calendar}
+            onPress={() => router.push('/admin/appointments-management')}
+          />
+          <AdminCard
+            title="Ödemeler"
+            icon={icons.payment}
+            onPress={() => router.push('/admin/payments')}
+          />
+          <AdminCard
+            title="Ayarlar"
+            icon={icons.settings}
+            onPress={() => router.push('/admin/settings')}
+          />
+        </View>
 
         {/* Gelir Özeti */}
         <View
@@ -100,7 +183,7 @@ export default function Dashboard() {
           <Text
             className={`text-2xl font-rubik-bold text-[${theme.colors.accent.primary}] mt-2`}
           >
-            {monthlyRevenue.toLocaleString('tr-TR')} ₺
+            {formatCurrency(monthlyRevenue || 0)}
           </Text>
         </View>
 

@@ -1,6 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
 import { useGlobalContext } from '@/lib/global-provider';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useTheme } from '@/lib/theme-provider';
 
 export default function AdminLayout() {
@@ -9,36 +9,39 @@ export default function AdminLayout() {
 
   if (loading) {
     return (
-      <View
-        className={`flex-1 items-center justify-center bg-[${theme.colors.background.primary(isDarkMode)}]`}
-      >
-        <ActivityIndicator color={theme.colors.text.primary(isDarkMode)} />
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator color={theme.colors.accent.primary} />
       </View>
     );
   }
 
-  // Kullanıcı ve rol kontrolü
   if (!user || user.role !== 'admin') {
-    return <Redirect href="/(root)/(tabs)" />;
+    return <Redirect href="/" />;
   }
 
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right',
         contentStyle: {
           backgroundColor: theme.colors.background.primary(isDarkMode),
         },
       }}
     >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
-        name="dashboard"
-        options={{
-          title: 'Admin Panel',
-          animation: 'fade',
-        }}
+        name="portfolio-management"
+        options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="appointments-management"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen name="analytics" options={{ headerShown: false }} />
+      <Stack.Screen name="client-management" options={{ headerShown: false }} />
+      <Stack.Screen name="payments" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
+      <Stack.Screen name="client/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

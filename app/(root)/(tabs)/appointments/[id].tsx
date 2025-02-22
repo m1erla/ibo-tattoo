@@ -21,6 +21,8 @@ import { databases, appwriteConfig } from '@/lib/appwrite';
 import { Calendar } from 'react-native-calendars';
 import { useTheme } from '@/lib/theme-provider';
 import * as Notifications from 'expo-notifications';
+import { reviewsService } from '@/lib/services/reviews';
+import { ID } from 'react-native-appwrite';
 
 const TATTOO_SIZES = ['Küçük', 'Orta', 'Büyük', 'Çok Büyük'];
 const TATTOO_STYLES = ['Minimal', 'Realistik', 'Traditional', 'Tribal'];
@@ -42,7 +44,13 @@ interface AppointmentDetails {
 
 export default function AppointmentDetails() {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{
+    id: string;
+    date?: string;
+    time?: string;
+    status?: string;
+    isNew?: string;
+  }>();
   const { id, date, time, status, isNew } = params;
 
   const [size, setSize] = useState('');
@@ -168,11 +176,105 @@ export default function AppointmentDetails() {
 
   // Notification izni ve kayıt
   const registerForPushNotifications = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') return;
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Uyarı', 'Bildirim izni verilmedi');
+        return;
+      }
 
-    const token = await Notifications.getExpoPushTokenAsync();
-    // Token'ı backend'e kaydet
+      const token = await Notifications.getExpoPushTokenAsync();
+
+      // Token'ı veritabanına kaydet
+      await databases.createDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.pushTokensCollectionId!,
+        ID.unique(),
+        {
+          userId: user!.$id,
+          token: token.data,
+          createdAt: new Date().toISOString(),
+        }
+      );
+    } catch (error) {
+      console.error('Push notification kaydı hatası:', error);
+    }
+  };
+
+  const ReviewSection = () => {
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+
+    const submitReview = async () => {
+      try {
+        if (rating === 0) {
+          Alert.alert('Hata', 'Lütfen bir puan verin');
+          return;
+        }
+
+        await reviewsService.create({
+          userId: user!.$id,
+          appointmentId: id,
+          rating,
+          comment,
+          images,
+        });
+
+        Alert.alert('Başarılı', 'Değerlendirmeniz kaydedildi');
+        router.back();
+      } catch (error) {
+        Alert.alert('Hata', 'Değerlendirme kaydedilirken bir hata oluştu');
+      }
+    };
+
+    return (
+      <View className="mt-6">
+        <Text
+          className={`text-lg font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+        >
+          Değerlendirme
+        </Text>
+
+        {/* Yıldız Derecelendirme */}
+        <View className="flex-row justify-center mb-4">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Pressable
+              key={star}
+              onPress={() => setRating(star)}
+              className="px-2"
+            >
+              <Text
+                className={`text-2xl ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+              >
+                ★
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Yorum Alanı */}
+        <TextInput
+          value={comment}
+          onChangeText={setComment}
+          placeholder="Deneyiminizi paylaşın..."
+          multiline
+          numberOfLines={4}
+          className={`p-4 rounded-xl bg-[${theme.colors.card.background(isDarkMode)}] text-[${theme.colors.text.primary(isDarkMode)}] mb-4`}
+          placeholderTextColor={theme.colors.text.secondary(isDarkMode)}
+        />
+
+        {/* Gönder Butonu */}
+        <Pressable
+          onPress={submitReview}
+          className={`p-4 rounded-xl bg-[${theme.colors.accent.primary}]`}
+        >
+          <Text className="text-white text-center font-rubik-medium">
+            Değerlendirmeyi Gönder
+          </Text>
+        </Pressable>
+      </View>
+    );
   };
 
   return (
@@ -376,6 +478,8 @@ export default function AppointmentDetails() {
             </Pressable>
           </View>
         )}
+
+        {appointment?.status === 'completed' && <ReviewSection />}
       </ScrollView>
 
       {/* İptal Modalı */}

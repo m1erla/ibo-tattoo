@@ -1,6 +1,5 @@
-import { databases, appwriteConfig } from "@/lib/appwrite";
-import { ID } from "react-native-appwrite";
-import { Query } from "react-native-appwrite";
+import { databases, appwriteConfig, client } from "@/lib/appwrite";
+import { ID, Query, RealtimeResponseEvent } from "react-native-appwrite";
 import { notificationService } from "./notification";
 import { format, addHours, isBefore } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -19,6 +18,43 @@ export interface CreateAppointmentDTO {
   price?: number;
   status: AppointmentStatus;
 }
+
+// Gerçek zamanlı müsaitlik için subscriber listesi
+let availabilitySubscribers: ((slots: string[]) => void)[] = [];
+
+// Hatırlatma tipleri için enum
+export enum ReminderType {
+  DAY_BEFORE = 'day_before',
+  HOURS_BEFORE = 'hours_before',
+  CUSTOM = 'custom'
+}
+
+export interface ReminderConfig {
+  type: ReminderType;
+  hours?: number;
+  message?: string;
+}
+
+export const DEFAULT_REMINDERS: ReminderConfig[] = [
+  {
+    type: ReminderType.DAY_BEFORE,
+    hours: 24,
+    message: 'Yarın randevunuz var!'
+  },
+  {
+    type: ReminderType.HOURS_BEFORE,
+    hours: 3,
+    message: '3 saat sonra randevunuz var.'
+  },
+  {
+    type: ReminderType.HOURS_BEFORE,
+    hours: 1,
+    message: '1 saat sonra randevunuz var. Hazırlanmayı unutmayın!'
+  }
+];
+
+// Basitleştirilmiş zaman dilimi yönetimi
+const TIME_SLOTS = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
 
 export const appointmentService = {
   // Randevu oluşturma
@@ -177,49 +213,88 @@ export const appointmentService = {
     }
   },
 
+  // Saat dilimi ayarlaması ile randevu oluşturma
+  createWithTimezone: async (data: CreateAppointmentDTO) => {
+    try {
+      if (!data.clientId) {
+        throw new Error('Client ID is required');
+      }
+
+      // Basit tarih formatı
+      const appointmentDate = new Date(data.dateTime);
+      
+      const documentData = {
+        clientId: data.clientId,
+        dateTime: appointmentDate.toISOString(),
+        designDetails: JSON.stringify(data.designDetails),
+        status: data.status,
+        notes: data.notes || '',
+        price: calculatePrice(data.designDetails),
+        createdAt: new Date().toISOString()
+      };
+
+      return await databases.createDocument(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        ID.unique(),
+        documentData
+      );
+
+    } catch (error) {
+      console.error("Randevu oluşturma hatası:", error);
+      throw error;
+    }
+  },
+
+  // Gerçek zamanlı müsaitlik takibi
+  subscribeToAvailability: (date: string, callback: (slots: string[]) => void) => {
+    // Başlangıçta mevcut slotları getir
+    appointmentService.getAvailableTimeSlots(date)
+      .then(slots => callback(slots))
+      .catch(error => console.error('Müsaitlik kontrolü hatası:', error));
+
+    // Gerçek zamanlı güncelleme için subscription
+    const unsubscribe = client.subscribe(
+      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.appointmentsCollectionId}.documents`,
+      () => {
+        appointmentService.getAvailableTimeSlots(date)
+          .then(slots => callback(slots))
+          .catch(error => console.error('Müsaitlik güncellemesi hatası:', error));
+      }
+    );
+
+    return unsubscribe;
+  },
+
   // Belirli bir tarih için müsait zaman dilimlerini getir
   getAvailableTimeSlots: async (date: string) => {
     try {
-      // O gün için olan tüm randevuları getir
+      // O gün için olan randevuları getir
       const response = await databases.listDocuments(
         appwriteConfig.databaseId!,
         appwriteConfig.appointmentsCollectionId!,
         [
-          Query.greaterThanEqual("dateTime", `${date}T00:00:00.000Z`),
-          Query.lessThan("dateTime", `${date}T23:59:59.999Z`),
-          Query.notEqual("status", "cancelled"),
+          Query.equal('dateTime', date),
+          Query.notEqual('status', 'cancelled')
         ]
       );
 
-      // Dolu zaman dilimlerini bul
-      const bookedSlots = response.documents.map((doc) => {
-        const dateTime = new Date(doc.dateTime);
-        return `${dateTime.getHours().toString().padStart(2, "0")}:${dateTime
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}`;
-      });
-
-      // Tüm zaman dilimleri (10:00-18:00 arası, 1 saat aralıklarla)
-      const ALL_TIME_SLOTS = [
-        "10:00",
-        "11:00",
-        "12:00",
-        "14:00", // Öğle arası 13:00
-        "15:00",
-        "16:00",
-        "17:00",
-      ];
-
-      // Müsait zaman dilimlerini hesapla
-      const availableSlots = ALL_TIME_SLOTS.filter(
-        (slot) => !bookedSlots.includes(slot)
+      // Dolu saatleri bul
+      const bookedTimes = response.documents.map(doc => 
+        new Date(doc.dateTime).toLocaleTimeString('tr-TR', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        })
       );
+
+      // Müsait saatleri hesapla
+      const availableSlots = TIME_SLOTS.filter(slot => !bookedTimes.includes(slot));
 
       return availableSlots;
     } catch (error) {
-      console.error("Müsait zaman dilimleri getirme hatası:", error);
-      throw error;
+      console.error('Müsait saatler getirilemedi:', error);
+      return TIME_SLOTS; // Hata durumunda tüm saatleri göster
     }
   },
 
@@ -345,36 +420,110 @@ export const appointmentService = {
     }
   },
 
-  // Saat dilimi ayarlaması ile randevu oluşturma
-  createWithTimezone: async (data: CreateAppointmentDTO) => {
+  // Gelişmiş hatırlatıcı sistemi
+  scheduleAdvancedReminders: async (
+    appointmentId: string,
+    customReminders?: ReminderConfig[]
+  ) => {
     try {
-      // Kullanıcının yerel saat dilimini al
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      
-      // Tarihi UTC'ye çevir
-      const localDate = new Date(data.dateTime);
-      const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
-
-      const response = await databases.createDocument(
+      const appointment = await databases.getDocument(
         appwriteConfig.databaseId!,
         appwriteConfig.appointmentsCollectionId!,
-        ID.unique(),
-        {
-          ...data,
-          dateTime: utcDate.toISOString(),
-          timezone: userTimezone,
-          createdAt: new Date(),
-        }
+        appointmentId
       );
 
-      // Hatırlatıcıları planla
-      await appointmentService.scheduleReminders(response.$id);
+      const appointmentDate = new Date(appointment.dateTime);
+      const now = new Date();
+      const reminders = customReminders || DEFAULT_REMINDERS;
 
-      return response;
+      // Her bir hatırlatma için zamanlayıcı oluştur
+      reminders.forEach(reminder => {
+        const reminderTime = new Date(appointmentDate.getTime());
+
+        switch (reminder.type) {
+          case ReminderType.DAY_BEFORE:
+            reminderTime.setHours(reminderTime.getHours() - 24);
+            break;
+          case ReminderType.HOURS_BEFORE:
+            if (reminder.hours) {
+              reminderTime.setHours(reminderTime.getHours() - reminder.hours);
+            }
+            break;
+          case ReminderType.CUSTOM:
+            // Özel hatırlatma mantığı
+            break;
+        }
+
+        // Eğer hatırlatma zamanı geçmemişse planla
+        if (isBefore(now, reminderTime)) {
+          const delay = reminderTime.getTime() - now.getTime();
+          
+          setTimeout(async () => {
+            try {
+              // Randevunun hala aktif olduğunu kontrol et
+              const currentAppointment = await databases.getDocument(
+                appwriteConfig.databaseId!,
+                appwriteConfig.appointmentsCollectionId!,
+                appointmentId
+              );
+
+              if (currentAppointment.status !== 'cancelled') {
+                const message = reminder.message || `Randevunuza ${reminder.hours} saat kaldı.`;
+                
+                await notificationService.sendPushNotification(
+                  [appointment.clientId],
+                  "Randevu Hatırlatması",
+                  `${message}\nSaat: ${format(appointmentDate, 'HH:mm', { locale: tr })}`
+                );
+
+                // Hatırlatma kaydını oluştur
+                await databases.createDocument(
+                  appwriteConfig.databaseId!,
+                  'reminders',
+                  ID.unique(),
+                  {
+                    appointmentId,
+                    type: reminder.type,
+                    scheduledFor: reminderTime.toISOString(),
+                    sentAt: new Date().toISOString(),
+                    status: 'sent'
+                  }
+                );
+              }
+            } catch (error) {
+              console.error('Hatırlatma gönderme hatası:', error);
+            }
+          }, delay);
+
+          // Planlanan hatırlatmayı kaydet
+          databases.createDocument(
+            appwriteConfig.databaseId!,
+            'reminders',
+            ID.unique(),
+            {
+              appointmentId,
+              type: reminder.type,
+              scheduledFor: reminderTime.toISOString(),
+              status: 'scheduled'
+            }
+          );
+        }
+      });
     } catch (error) {
-      console.error("Randevu oluşturma hatası:", error);
+      console.error('Gelişmiş hatırlatıcı planlama hatası:', error);
       throw error;
     }
+  },
+
+  // Saat dilimi yönetimi için yardımcı fonksiyonlar
+  convertToUserTimezone: (utcDate: string, userTimezone: string) => {
+    return new Date(utcDate).toLocaleString('tr-TR', { timeZone: userTimezone });
+  },
+
+  convertToUTC: (localDate: string, userTimezone: string) => {
+    const date = new Date(localDate);
+    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+    return utcDate.toISOString();
   },
 };
 
@@ -416,4 +565,14 @@ const calculatePrice = (designDetails: { size: string; style: string }) => {
   }
 
   return Math.round(basePrice);
+};
+
+// Yardımcı fonksiyonlar
+const updateAvailabilityForDate = async (date: string) => {
+  try {
+    const slots = await appointmentService.getAvailableTimeSlots(date);
+    availabilitySubscribers.forEach(callback => callback(slots));
+  } catch (error) {
+    console.error("Müsaitlik güncellemesi hatası:", error);
+  }
 }; 
