@@ -9,6 +9,10 @@ import logo from "@/assets/images/logo.png";
 import favicon from "@/assets/images/favicon.png";
 import placeholder from "@/assets/images/placeholder.png";
 import splashIcon from "@/assets/images/splash-icon.png";
+import tr from "@/assets/images/flags/tr.png";
+import en from "@/assets/images/flags/en.png";
+import de from "@/assets/images/flags/de.png";
+import nl from "@/assets/images/flags/nl.png";
 
 export default {
   avatar,
@@ -22,4 +26,8 @@ export default {
   favicon,
   placeholder,
   splashIcon,
+  tr,
+  en,
+  de,
+  nl,
 };

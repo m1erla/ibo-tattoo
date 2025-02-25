@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.1"
+    "version": ">= 5.9.1",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -8,21 +9,59 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000/api",
+        "EXPO_PUBLIC_DEFAULT_LANGUAGE": "tr"
       }
     },
     "preview": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "withoutCredentials": true
+      },
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://stage-api.ibotattoo.com",
+        "EXPO_PUBLIC_DEFAULT_LANGUAGE": "tr",
+        "EXPO_PUBLIC_ENABLE_ANALYTICS": "true"
       }
     },
     "production": {
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.ibotattoo.com",
+        "EXPO_PUBLIC_DEFAULT_LANGUAGE": "tr",
+        "EXPO_PUBLIC_ENABLE_ANALYTICS": "true",
+        "EXPO_PUBLIC_MAPS_API_KEY": "YOUR_GOOGLE_MAPS_API_KEY",
+        "EXPO_PUBLIC_AVAILABLE_LANGUAGES": "tr,en,de,nl"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABC123"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./path-to-google-service-account.json",
+        "track": "production"
+      }
+    }
   }
-} 
+}

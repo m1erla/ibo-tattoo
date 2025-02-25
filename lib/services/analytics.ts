@@ -1,6 +1,7 @@
 import { databases, appwriteConfig } from '@/lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
 export interface MonthlyStats {
   revenue: number;
@@ -113,6 +114,42 @@ export const analyticsService = {
     } catch (error) {
       console.error('Demografik veri getirme hatası:', error);
       throw error;
+    }
+  },
+
+  // Son 6 ayın randevu dağılımını getir
+  getLast6MonthsAppointments: async () => {
+    try {
+      const today = new Date();
+      const labels = [];
+      const data = [];
+      
+      // Son 6 ay için döngü
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = subMonths(today, i);
+        const monthLabel = format(monthDate, 'MMM', { locale: tr });
+        labels.push(monthLabel);
+        
+        const startOfMonthDate = startOfMonth(monthDate);
+        const endOfMonthDate = endOfMonth(monthDate);
+        
+        // Bu ay için randevuları getir
+        const appointments = await databases.listDocuments(
+          appwriteConfig.databaseId!,
+          appwriteConfig.appointmentsCollectionId!,
+          [
+            Query.greaterThanEqual('dateTime', startOfMonthDate.toISOString()),
+            Query.lessThanEqual('dateTime', endOfMonthDate.toISOString())
+          ]
+        );
+        
+        data.push(appointments.documents.length);
+      }
+      
+      return { labels, data };
+    } catch (error) {
+      console.error('Son 6 ay randevu verisi getirme hatası:', error);
+      return { labels: [], data: [] };
     }
   },
 }; 

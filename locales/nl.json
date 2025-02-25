@@ -1,0 +1,22 @@
+{
+  "common": {
+    "back": "Terug",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "next": "Volgende",
+    "done": "Klaar",
+    "confirm": "Bevestigen",
+    "loading": "Laden..."
+  },
+  "auth": {
+    "signIn": "Inloggen",
+    "signOut": "Uitloggen",
+    "signUp": "Registreren",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "forgotPassword": "Wachtwoord vergeten",
+    "continueWithGoogle": "Doorgaan met Google"
+  }
+} 

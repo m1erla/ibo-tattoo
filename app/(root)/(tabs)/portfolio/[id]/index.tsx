@@ -40,6 +40,7 @@ export default function PortfolioDetail() {
   const router = useRouter();
   const { user } = useGlobalContext();
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     const loadPortfolioItem = async () => {
@@ -149,6 +150,35 @@ export default function PortfolioDetail() {
               />
             </BlurView>
           </Pressable>
+          {item.beforeImageUrl && (
+            <Pressable
+              onPress={() => setShowComparison(!showComparison)}
+              className="absolute bottom-4 left-4"
+            >
+              <BlurView intensity={30} className="px-4 py-2 rounded-full">
+                <Text className="text-white font-rubik-medium">
+                  {showComparison ? 'Sonrasını Göster' : 'Öncesini Göster'}
+                </Text>
+              </BlurView>
+            </Pressable>
+          )}
+          {showComparison && item.beforeImageUrl && (
+            <View className="absolute top-0 left-0 right-0 bottom-0 bg-black">
+              <Image
+                source={{ uri: item.beforeImageUrl }}
+                style={{ width, height: width }}
+                PlaceholderContent={<ActivityIndicator />}
+              />
+              <Pressable
+                onPress={() => setShowComparison(false)}
+                className="absolute top-4 right-4"
+              >
+                <BlurView intensity={30} className="p-2 rounded-full">
+                  <Text className="text-white font-rubik-medium">Kapat</Text>
+                </BlurView>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View className="p-4">

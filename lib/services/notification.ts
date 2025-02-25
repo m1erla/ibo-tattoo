@@ -4,6 +4,8 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { databases, appwriteConfig, functions } from "@/lib/appwrite";
 import { ID } from "react-native-appwrite";
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
 // Bildirim ayarları
 Notifications.setNotificationHandler({
@@ -13,6 +15,15 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+
+// Gelişmiş bildirim tipleri
+export enum NotificationType {
+  APPOINTMENT_REMINDER = 'appointment_reminder',
+  APPOINTMENT_CONFIRMED = 'appointment_confirmed',
+  APPOINTMENT_CANCELLED = 'appointment_cancelled',
+  NEW_MESSAGE = 'new_message',
+  PAYMENT_RECEIVED = 'payment_received'
+}
 
 export const notificationService = {
   // Push token'ı kaydet
@@ -94,6 +105,60 @@ export const notificationService = {
     } catch (error) {
       console.error("Bildirim gönderme hatası:", error);
       throw error;
+    }
+  },
+
+  // Farklı zamanlarda randevu hatırlatması için
+  scheduleAppointmentReminders: async (appointmentId: string, appointmentDate: Date, userId: string) => {
+    try {
+      // Randevudan 1 gün önce hatırlatma
+      const oneDayBefore = new Date(appointmentDate);
+      oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+      oneDayBefore.setHours(10, 0, 0, 0);
+      
+      if (oneDayBefore > new Date()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Randevu Hatırlatması',
+            body: `Yarın saat ${format(appointmentDate, 'HH:mm', { locale: tr })} için randevunuz var.`,
+            data: { appointmentId, type: NotificationType.APPOINTMENT_REMINDER }
+          },
+          trigger: { date: oneDayBefore, type: 'date' as never },
+        });
+      }
+      
+      // Randevudan 3 saat önce hatırlatma
+      const threeHoursBefore = new Date(appointmentDate);
+      threeHoursBefore.setHours(threeHoursBefore.getHours() - 3);
+      
+      if (threeHoursBefore > new Date()) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Randevu Yaklaşıyor',
+            body: `Randevunuza 3 saat kaldı. Saat: ${format(appointmentDate, 'HH:mm', { locale: tr })}`,
+            data: { appointmentId, type: NotificationType.APPOINTMENT_REMINDER }
+          },
+          trigger: { date: threeHoursBefore, type: 'date' as never },
+        });
+      }
+      
+      // Randevu bildirimleri veritabanına kaydetme
+      await databases.createDocument(
+        appwriteConfig.databaseId!,
+        'notification_schedules',
+        ID.unique(),
+        {
+          userId,
+          appointmentId,
+          scheduledTimes: [oneDayBefore.toISOString(), threeHoursBefore.toISOString()],
+          createdAt: new Date().toISOString()
+        }
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Bildirim zamanlama hatası:', error);
+      return false;
     }
   },
 }; 

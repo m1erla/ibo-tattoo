@@ -1,0 +1,73 @@
+{
+  "common": {
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "next": "Next",
+    "done": "Done",
+    "confirm": "Confirm",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password",
+    "continueWithGoogle": "Continue with Google"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "recentAppointments": "Recent Appointments",
+    "portfolioHighlights": "Portfolio Highlights",
+    "viewAll": "View All",
+    "bookAppointment": "Book Appointment"
+  },
+  "appointments": {
+    "title": "Appointments",
+    "upcoming": "Upcoming Appointments",
+    "past": "Past Appointments",
+    "cancelled": "Cancelled Appointments",
+    "noAppointments": "You don't have any appointments yet",
+    "details": "Appointment Details",
+    "date": "Date",
+    "time": "Time",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "cancel": "Cancel Appointment",
+    "reschedule": "Reschedule"
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "allStyles": "All Styles",
+    "filters": "Filters",
+    "size": "Size",
+    "style": "Style",
+    "sortBy": "Sort By",
+    "newest": "Newest",
+    "popular": "Most Popular",
+    "details": "Details",
+    "noItems": "No works in this category yet"
+  },
+  "priceCalculator": {
+    "title": "Price Calculator",
+    "intro": "Calculate an estimated price by selecting the tattoo size, style, and placement.",
+    "size": "Size",
+    "style": "Style",
+    "placement": "Placement",
+    "complexity": "Complexity Level",
+    "simple": "Simple",
+    "complex": "Complex",
+    "estimatedPrice": "Estimated Price",
+    "depositAmount": "Deposit Amount",
+    "depositNote": "Deposit is required to confirm your appointment.",
+    "createAppointment": "Create Appointment"
+  }
+} 

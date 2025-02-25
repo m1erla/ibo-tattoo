@@ -18,6 +18,10 @@ import plus from "@/assets/icons/plus.png";
 import dashboard from "@/assets/icons/dashboard.png";
 import settings from "@/assets/icons/settings.png";
 import payment from "@/assets/icons/payment.png";
+import hourglass from "@/assets/icons/hourglass.png";
+import check from "@/assets/icons/check.png";
+import chevronRight from "@/assets/icons/chevron-right.png";
+import notification from "@/assets/icons/notification-icon.png";
 
 export default {
   google,
@@ -39,5 +43,9 @@ export default {
   plus,
   dashboard,
   settings,
-  payment,
+  payment,  
+  hourglass,
+  check,
+  chevronRight,
+  notification
 };

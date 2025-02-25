@@ -1,8 +1,9 @@
 import { databases, appwriteConfig, client } from "@/lib/appwrite";
 import { ID, Query, RealtimeResponseEvent } from "react-native-appwrite";
 import { notificationService } from "./notification";
-import { format, addHours, isBefore } from "date-fns";
+import { format, addHours, isBefore, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
+import { formatInTimeZone, getTimezoneOffset } from 'date-fns-tz';
 
 export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
@@ -214,87 +215,70 @@ export const appointmentService = {
   },
 
   // Saat dilimi ayarlaması ile randevu oluşturma
-  createWithTimezone: async (data: CreateAppointmentDTO) => {
+  createWithTimezone: async (data: CreateAppointmentDTO, timeZone?: string) => {
     try {
-      if (!data.clientId) {
-        throw new Error('Client ID is required');
-      }
-
-      // Basit tarih formatı
-      const appointmentDate = new Date(data.dateTime);
+      // Kullanıcının yerel saat dilimindeki tarihi UTC'ye dönüştür
+      const utcDateTime = timeZone 
+        ? appointmentService.convertToUTC(data.dateTime, timeZone)
+        : data.dateTime;
       
-      const documentData = {
-        clientId: data.clientId,
-        dateTime: appointmentDate.toISOString(),
-        designDetails: JSON.stringify(data.designDetails),
-        status: data.status,
-        notes: data.notes || '',
-        price: calculatePrice(data.designDetails),
-        createdAt: new Date().toISOString()
-      };
-
-      return await databases.createDocument(
-        appwriteConfig.databaseId!,
-        appwriteConfig.appointmentsCollectionId!,
-        ID.unique(),
-        documentData
-      );
-
+      // Diğer işlemler normal şekilde devam eder...
+      return await appointmentService.create({
+        ...data,
+        dateTime: utcDateTime
+      });
     } catch (error) {
-      console.error("Randevu oluşturma hatası:", error);
+      console.error('Randevu oluşturma hatası:', error);
       throw error;
     }
   },
 
   // Gerçek zamanlı müsaitlik takibi
   subscribeToAvailability: (date: string, callback: (slots: string[]) => void) => {
-    // Başlangıçta mevcut slotları getir
-    appointmentService.getAvailableTimeSlots(date)
-      .then(slots => callback(slots))
-      .catch(error => console.error('Müsaitlik kontrolü hatası:', error));
-
-    // Gerçek zamanlı güncelleme için subscription
     const unsubscribe = client.subscribe(
-      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.appointmentsCollectionId}.documents`,
-      () => {
-        appointmentService.getAvailableTimeSlots(date)
-          .then(slots => callback(slots))
-          .catch(error => console.error('Müsaitlik güncellemesi hatası:', error));
+      `appointments-availability-${format(new Date(date), 'yyyy-MM-dd')}`,
+      (response) => {
+        if (response.events.includes('appointments.update')) {
+          appointmentService.getAvailableTimeSlots(date).then(slots => callback(slots));
+        }
       }
     );
-
+    
+    // İlk yükleme
+    appointmentService.getAvailableTimeSlots(date).then(slots => callback(slots));
+    
     return unsubscribe;
   },
 
   // Belirli bir tarih için müsait zaman dilimlerini getir
-  getAvailableTimeSlots: async (date: string) => {
+  getAvailableTimeSlots: async (date: string): Promise<string[]> => {
     try {
-      // O gün için olan randevuları getir
-      const response = await databases.listDocuments(
+      const appointmentsResponse = await databases.listDocuments(
         appwriteConfig.databaseId!,
         appwriteConfig.appointmentsCollectionId!,
         [
-          Query.equal('dateTime', date),
+          Query.greaterThanEqual('dateTime', `${date}T00:00:00.000Z`),
+          Query.lessThanEqual('dateTime', `${date}T23:59:59.999Z`),
           Query.notEqual('status', 'cancelled')
         ]
       );
-
-      // Dolu saatleri bul
-      const bookedTimes = response.documents.map(doc => 
-        new Date(doc.dateTime).toLocaleTimeString('tr-TR', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        })
+      
+      // Tüm zaman dilimleri
+      const allTimeSlots = [
+        '10:00', '11:00', '12:00', '13:00', '14:00', 
+        '15:00', '16:00', '17:00', '18:00'
+      ];
+      
+      // Dolu slotları bul
+      const bookedSlots = appointmentsResponse.documents.map(doc => 
+        format(new Date(doc.dateTime), 'HH:mm')
       );
-
-      // Müsait saatleri hesapla
-      const availableSlots = TIME_SLOTS.filter(slot => !bookedTimes.includes(slot));
-
-      return availableSlots;
+      
+      // Müsait slotları hesapla
+      return allTimeSlots.filter(slot => !bookedSlots.includes(slot));
     } catch (error) {
-      console.error('Müsait saatler getirilemedi:', error);
-      return TIME_SLOTS; // Hata durumunda tüm saatleri göster
+      console.error('Müsait zaman dilimleri getirme hatası:', error);
+      return [];
     }
   },
 
@@ -516,13 +500,16 @@ export const appointmentService = {
   },
 
   // Saat dilimi yönetimi için yardımcı fonksiyonlar
-  convertToUserTimezone: (utcDate: string, userTimezone: string) => {
-    return new Date(utcDate).toLocaleString('tr-TR', { timeZone: userTimezone });
+  convertToLocalTime: (utcDateString: string, timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone): string => {
+    return formatInTimeZone(parseISO(utcDateString), timeZone, 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx');
   },
 
-  convertToUTC: (localDate: string, userTimezone: string) => {
-    const date = new Date(localDate);
-    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+  convertToUTC: (localDateString: string, timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone): string => {
+    const localDate = parseISO(localDateString);
+    const timeZoneOffset = getTimezoneOffset(timeZone, localDate);
+    
+    // UTC zamanını hesapla
+    const utcDate = new Date(localDate.getTime() - timeZoneOffset);
     return utcDate.toISOString();
   },
 };

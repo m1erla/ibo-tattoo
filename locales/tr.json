@@ -1,0 +1,73 @@
+{
+  "common": {
+    "back": "Geri",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "next": "İleri",
+    "done": "Tamam",
+    "confirm": "Onayla",
+    "loading": "Yükleniyor..."
+  },
+  "auth": {
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap",
+    "signUp": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "forgotPassword": "Şifremi Unuttum",
+    "continueWithGoogle": "Google ile Devam Et"
+  },
+  "home": {
+    "welcome": "Hoş Geldiniz",
+    "recentAppointments": "Son Randevular",
+    "portfolioHighlights": "Öne Çıkan Çalışmalar",
+    "viewAll": "Tümünü Gör",
+    "bookAppointment": "Randevu Al"
+  },
+  "appointments": {
+    "title": "Randevular",
+    "upcoming": "Yaklaşan Randevular",
+    "past": "Geçmiş Randevular",
+    "cancelled": "İptal Edilen Randevular",
+    "noAppointments": "Henüz randevunuz bulunmuyor",
+    "details": "Randevu Detayları",
+    "date": "Tarih",
+    "time": "Saat",
+    "status": {
+      "pending": "Beklemede",
+      "confirmed": "Onaylandı",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi"
+    },
+    "cancel": "Randevuyu İptal Et",
+    "reschedule": "Yeniden Planla"
+  },
+  "portfolio": {
+    "title": "Portfolyo",
+    "allStyles": "Tüm Stiller",
+    "filters": "Filtreler",
+    "size": "Boyut",
+    "style": "Stil",
+    "sortBy": "Sıralama",
+    "newest": "En Yeni",
+    "popular": "En Popüler",
+    "details": "Detaylar",
+    "noItems": "Bu kategoride henüz çalışma bulunmuyor"
+  },
+  "priceCalculator": {
+    "title": "Fiyat Hesaplama",
+    "intro": "Dövme boyutu, stili ve yerleşimi seçerek yaklaşık bir fiyat hesaplayabilirsiniz.",
+    "size": "Boyut",
+    "style": "Stil",
+    "placement": "Yerleşim",
+    "complexity": "Karmaşıklık Seviyesi",
+    "simple": "Basit",
+    "complex": "Karmaşık",
+    "estimatedPrice": "Tahmini Fiyat",
+    "depositAmount": "Depozito Tutarı",
+    "depositNote": "Randevu onayı için depozito gereklidir.",
+    "createAppointment": "Randevu Oluştur"
+  }
+} 

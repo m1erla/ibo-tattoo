@@ -13,15 +13,28 @@ import { useGlobalContext } from '@/lib/global-provider';
 import { useRouter } from 'expo-router';
 import icons from '@/constants/icons';
 import { useTheme } from '@/lib/theme-provider';
+import { useLanguage } from '@/lib/services/language';
 
 export default function Profile() {
   const { user, logout, refetch } = useGlobalContext();
   const router = useRouter();
   const { isDarkMode, theme, toggleTheme } = useTheme();
+  const { locale, languages } = useLanguage();
 
   const handleLogout = async () => {
     await logout();
     router.replace('/sign-in');
+  };
+
+  const getCurrentLanguageName = () => {
+    const languageNames = {
+      tr: 'Türkçe',
+      en: 'English',
+      de: 'Deutsch',
+      nl: 'Nederlands',
+    };
+
+    return languageNames[locale as keyof typeof languageNames] || 'Türkçe';
   };
 
   return (
@@ -74,9 +87,40 @@ export default function Profile() {
               <Switch />
             </Pressable>
 
-            <Pressable className="p-4 flex-row items-center justify-between">
-              <Text className="font-rubik text-black-300">Dil</Text>
-              <Text className="font-rubik text-black-100">Türkçe</Text>
+            <Pressable
+              onPress={() => router.push('/language-settings')}
+              className={`flex-row items-center justify-between p-4 rounded-xl ${theme.colors.card.background(isDarkMode)}`}
+            >
+              <View className="flex-row items-center">
+                <Image
+                  source={icons.language || icons.settings}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    tintColor: theme.colors.text.primary(isDarkMode),
+                  }}
+                />
+                <View className="ml-3">
+                  <Text
+                    className={`font-rubik-medium text-[${theme.colors.text.primary(isDarkMode)}]`}
+                  >
+                    Uygulama Dili
+                  </Text>
+                  <Text
+                    className={`text-sm text-[${theme.colors.text.secondary(isDarkMode)}]`}
+                  >
+                    {getCurrentLanguageName()}
+                  </Text>
+                </View>
+              </View>
+              <Image
+                source={icons.chevronRight}
+                style={{
+                  width: 20,
+                  height: 20,
+                  tintColor: theme.colors.text.secondary(isDarkMode),
+                }}
+              />
             </Pressable>
 
             <Pressable

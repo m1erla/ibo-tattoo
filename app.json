@@ -16,7 +16,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#c8bfae"
-      }
+      },
+      "package": "com.m1erla.ibotattoo"
     },
     "web": {
       "bundler": "metro",
@@ -37,8 +38,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff",
+          "icon": "./assets/icons/notification-icon.png",
+          "color": "#FF3366",
           "sounds": ["./assets/notification-sound.wav"]
         }
       ],
@@ -55,7 +56,26 @@
           ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4a37f913-f1e8-42fb-bf06-418b896bd7d4"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4a37f913-f1e8-42fb-bf06-418b896bd7d4"
+    },
+    "notification": {
+      "icon": "./assets/icons/notification-icon.png",
+      "color": "#FF3366",
+      "sounds": ["./assets/notification-sound.wav"]
+    }
   },
   "experiments": {
     "typedRoutes": true
