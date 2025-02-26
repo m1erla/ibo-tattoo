@@ -10,13 +10,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/theme-provider';
 import { analyticsService, MonthlyStats } from '@/lib/services/analytics';
 import { LineChart, PieChart } from 'react-native-chart-kit';
-import { format, subMonths } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { format, Locale, subMonths } from 'date-fns';
+import { useLanguage } from '@/lib/services/language';
+import { tr, enUS, de, nl } from 'date-fns/locale';
+
+// Dil localleri için mapping
+const dateLocales: Record<string, Locale> = {
+  tr,
+  en: enUS,
+  de,
+  nl,
+};
 
 const { width } = Dimensions.get('window');
 
 export default function Analytics() {
   const { isDarkMode, theme } = useTheme();
+  const { t, locale } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [popularStyles, setPopularStyles] = useState<
@@ -63,7 +73,12 @@ export default function Analytics() {
 
   const revenueData = {
     labels: monthlyStats
-      .map((_, i) => format(subMonths(new Date(), i), 'MMM', { locale: tr }))
+      .map((_, i) => {
+        const currentLocale = dateLocales[locale] || tr;
+        return format(subMonths(new Date(), i), 'MMM', {
+          locale: currentLocale,
+        });
+      })
       .reverse(),
     datasets: [
       {
@@ -82,12 +97,13 @@ export default function Analytics() {
   return (
     <SafeAreaView
       className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+      style={{ paddingBottom: 70 }}
     >
       <ScrollView className="flex-1 p-4">
         <Text
           className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}] mb-6`}
         >
-          İstatistikler
+          {t('admin.statistics')}
         </Text>
 
         {/* Aylık Gelir Grafiği */}

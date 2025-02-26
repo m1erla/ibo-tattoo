@@ -49,6 +49,7 @@ export default function TabsLayout() {
           bottom: 0,
           left: 0,
           right: 0,
+          zIndex: 999,
           elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -3 },

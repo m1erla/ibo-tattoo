@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
 import icons from '@/constants/icons';
+import { useLanguage } from '@/lib/services/language';
 
 export default function ClientManagement() {
   const { isDarkMode, theme } = useTheme();
@@ -27,6 +28,7 @@ export default function ClientManagement() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 500);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadClients();
@@ -138,10 +140,10 @@ export default function ClientManagement() {
                 }`}
               >
                 {client.status === 'active'
-                  ? 'Aktif'
+                  ? t('admin.status.active')
                   : client.status === 'blocked'
-                    ? 'Engelli'
-                    : 'Pasif'}
+                    ? t('admin.status.blocked')
+                    : t('admin.status.inactive')}
               </Text>
             </View>
             {client.createdAt && (
@@ -168,7 +170,7 @@ export default function ClientManagement() {
         <Text
           className={`text-2xl font-rubik-semibold text-[${theme.colors.text.primary(isDarkMode)}] mb-6`}
         >
-          Müşteri Yönetimi
+          {t('admin.clientManagement')}
         </Text>
 
         <View className="mb-4">

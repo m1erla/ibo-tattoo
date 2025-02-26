@@ -1,13 +1,40 @@
 import { databases, appwriteConfig } from '@/lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS, de, nl } from 'date-fns/locale';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Dil localleri için bir mapping
+const dateLocales: Record<string, Locale> = {
+  tr,
+  en: enUS,
+  de,
+  nl,
+};
+
+// Kullanıcının mevcut dilini alma fonksiyonu
+const getCurrentLocale = async () => {
+  try {
+    const lang = await AsyncStorage.getItem('userLanguage') || 'tr';
+    return dateLocales[lang] || tr;
+  } catch (error) {
+    console.error('Dil bilgisi alınamadı:', error);
+    return tr;
+  }
+};
 
 export interface MonthlyStats {
   revenue: number;
   appointments: number;
   newClients: number;
   averageRating: number;
+}
+
+export interface DashboardStats {
+  totalAppointments: number;
+  monthlyRevenue: number;
+  activeClients: number;
+  pendingAppointments: number;
 }
 
 export const analyticsService = {
@@ -124,10 +151,13 @@ export const analyticsService = {
       const labels = [];
       const data = [];
       
+      // Kullanıcının mevcut dilini al
+      const currentLocale = await getCurrentLocale();
+      
       // Son 6 ay için döngü
       for (let i = 5; i >= 0; i--) {
         const monthDate = subMonths(today, i);
-        const monthLabel = format(monthDate, 'MMM', { locale: tr });
+        const monthLabel = format(monthDate, 'MMM', { locale: currentLocale });
         labels.push(monthLabel);
         
         const startOfMonthDate = startOfMonth(monthDate);
@@ -152,4 +182,65 @@ export const analyticsService = {
       return { labels: [], data: [] };
     }
   },
+
+  // Dashboard özet istatistikleri için yeni metod
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    try {
+      // Toplam randevu sayısı
+      const appointments = await databases.listDocuments(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        []
+      );
+      
+      // Bekleyen randevular
+      const pendingAppointments = await databases.listDocuments(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        [Query.equal('status', 'pending')]
+      );
+      
+      // Aktif müşteriler
+      const activeClients = await databases.listDocuments(
+        appwriteConfig.databaseId!,
+        appwriteConfig.userCollectionId!,
+        [Query.equal('status', 'active')]
+      );
+      
+      // Bu ayki gelir
+      const currentMonth = new Date();
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      
+      const completedAppointments = await databases.listDocuments(
+        appwriteConfig.databaseId!,
+        appwriteConfig.appointmentsCollectionId!,
+        [
+          Query.equal('status', 'completed'),
+          Query.greaterThanEqual('dateTime', firstDay.toISOString()),
+          Query.lessThanEqual('dateTime', lastDay.toISOString())
+        ]
+      );
+      
+      const monthlyRevenue = completedAppointments.documents.reduce(
+        (sum, appointment) => sum + (appointment.price || 0), 
+        0
+      );
+      
+      return {
+        totalAppointments: appointments.total,
+        monthlyRevenue,
+        activeClients: activeClients.total,
+        pendingAppointments: pendingAppointments.total
+      };
+    } catch (error) {
+      console.error('Dashboard istatistikleri getirme hatası:', error);
+      return {
+        totalAppointments: 0,
+        monthlyRevenue: 0,
+        activeClients: 0,
+        pendingAppointments: 0
+      };
+    }
+  }
 }; 

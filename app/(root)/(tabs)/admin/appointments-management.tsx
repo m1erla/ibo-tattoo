@@ -162,6 +162,7 @@ export default function AppointmentsManagement() {
   return (
     <SafeAreaView
       className={`flex-1 bg-[${theme.colors.background.primary(isDarkMode)}]`}
+      style={{ paddingBottom: 70 }}
     >
       <View className="flex-1 p-4">
         <Text

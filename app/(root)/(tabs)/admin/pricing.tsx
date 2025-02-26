@@ -19,9 +19,9 @@ export default function PricingManagement() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Fiyat kuralları
   const [pricingRules, setPricingRules] = useState<PricingRules | null>(null);
+  const [newOffer, setNewOffer] = useState({ name: '', discount: '' });
+  const [enableTimeBasedOffers, setEnableTimeBasedOffers] = useState(false);
 
   useEffect(() => {
     loadPricingRules();
@@ -53,6 +53,28 @@ export default function PricingManagement() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Özel teklif ekleme fonksiyonu
+  const addSpecialOffer = () => {
+    if (!newOffer.name || !newOffer.discount) {
+      Alert.alert(t('admin.error'), t('admin.offerDetailsRequired'));
+      return;
+    }
+
+    const updatedRules = { ...pricingRules };
+    if (!updatedRules.specialOffers) {
+      updatedRules.specialOffers = [];
+    }
+    updatedRules.specialOffers.push({
+      id: Date.now().toString(),
+      name: newOffer.name,
+      discount: parseInt(newOffer.discount),
+      active: true,
+    });
+
+    setPricingRules(updatedRules as PricingRules);
+    setNewOffer({ name: '', discount: '' });
   };
 
   if (loading || !pricingRules) {
@@ -305,6 +327,42 @@ export default function PricingManagement() {
                 %
               </Text>
             </View>
+          </View>
+        </View>
+
+        {/* Daha gelişmiş tarih bazlı özel teklifler için UI */}
+        <View className="mt-4">
+          <Text
+            className={`font-rubik-medium text-lg text-[${theme.colors.text.primary(isDarkMode)}] mb-2`}
+          >
+            {t('admin.timeBasedOffers')}
+          </Text>
+
+          <View
+            className={`p-4 rounded-xl bg-[${theme.colors.card.background(isDarkMode)}]`}
+          >
+            <View className="flex-row items-center mb-4">
+              <Switch
+                value={enableTimeBasedOffers}
+                onValueChange={setEnableTimeBasedOffers}
+                trackColor={{
+                  false: theme.colors.border.primary(isDarkMode),
+                  true: theme.colors.accent.primary,
+                }}
+              />
+              <Text
+                className={`ml-2 text-[${theme.colors.text.primary(isDarkMode)}]`}
+              >
+                {t('admin.enableTimeBasedOffers')}
+              </Text>
+            </View>
+
+            {enableTimeBasedOffers && (
+              <View>
+                {/* Hafta içi/sonu indirim seçenekleri */}
+                {/* Saatlik özel fiyatlandırma */}
+              </View>
+            )}
           </View>
         </View>
 

@@ -341,7 +341,29 @@ export default function Portfolio() {
   const loadMoreItems = async () => {
     if (loading) return;
     const nextPage = page + 1;
-    await loadPortfolioItems(nextPage);
+    try {
+      const response = await portfolioService.list(nextPage, {
+        ...filters,
+        sort:
+          filters.sortBy === 'recent'
+            ? { field: 'createdAt', direction: 'desc' }
+            : { field: 'likes', direction: 'desc' },
+      });
+
+      const newItems = (
+        response.documents as unknown as AppwriteDocument[]
+      ).map((doc) => ({
+        ...doc,
+        imageUrl: doc.images[0],
+        style: doc.title,
+      }));
+
+      // Mevcut öğelere yeni öğeleri ekle ve sayfayı güncelle
+      setPortfolioItems([...portfolioItems, ...newItems]);
+      setPage(nextPage);
+    } catch (error) {
+      console.error('Daha fazla portfolyo öğesi yükleme hatası:', error);
+    }
   };
 
   return (

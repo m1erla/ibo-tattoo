@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { useLanguage, SUPPORTED_LANGUAGES } from '@/lib/services/language';
 import { useGlobalContext } from '@/lib/global-provider';
 import icons from '@/constants/icons';
+import { databases } from '@/lib/services/databases';
+import { appwriteConfig } from '@/lib/services/appwrite';
 
 export default function LanguageSettings() {
   const { isDarkMode, theme } = useTheme();
@@ -26,9 +28,23 @@ export default function LanguageSettings() {
       await changeLanguage(code);
 
       if (user) {
-        // Kullanıcı tercihlerini güncelleyebiliriz
-        // Bu kısmı kendi kullanıcı tercihleri servisi ile entegre edin
+        // Kullanıcı dil tercihini backend'e kaydet
+        try {
+          await databases.updateDocument(
+            appwriteConfig.databaseId!,
+            appwriteConfig.userCollectionId!,
+            user.$id,
+            {
+              preferredLanguage: code,
+            }
+          );
+        } catch (error) {
+          console.error('Kullanıcı dil tercihi güncelleme hatası:', error);
+        }
       }
+
+      // Ana sayfaya yönlendir ve uygulamayı yenile
+      router.replace('/');
     } catch (error) {
       console.error('Dil değiştirme hatası:', error);
     }
